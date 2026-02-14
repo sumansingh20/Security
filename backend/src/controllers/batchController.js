@@ -760,6 +760,7 @@ export const terminateSession = async (req, res, next) => {
 export default {
   getServerTime,
   generateBatches,
+  getAllBatches,
   getExamBatches,
   getBatchDetails,
   startBatch,
