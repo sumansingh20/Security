@@ -52,6 +52,7 @@ router.get('/exams/:id/status', examLifecycleController.getExamStatus);
 router.post('/exams/:id/archive', adminController.archiveExam);
 
 // Batch management routes
+router.get('/batches', batchController.getAllBatches);
 router.post('/exams/:examId/batches/generate', batchController.generateBatches);
 router.get('/exams/:examId/batches', batchController.getExamBatches);
 router.get('/batches/:batchId', batchController.getBatchDetails);

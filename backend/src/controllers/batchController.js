@@ -98,6 +98,49 @@ export const generateBatches = async (req, res, next) => {
   }
 };
 
+// @desc    Get all batches (across all exams)
+// @route   GET /api/admin/batches
+// @access  Admin
+export const getAllBatches = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20, status, examId, search } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const query = {};
+    if (status) query.status = status;
+    if (examId) query.exam = examId;
+    if (search) query.name = { $regex: search, $options: 'i' };
+
+    const [batches, total] = await Promise.all([
+      ExamBatch.find(query)
+        .populate('exam', 'title subject status')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      ExamBatch.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        batches: (batches || []).map(b => ({
+          ...b,
+          studentCount: b.students?.length || 0
+        })),
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / parseInt(limit))
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get all batches for an exam
 // @route   GET /api/admin/exams/:examId/batches
 // @access  Admin/Teacher
