@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+
+# Environment files
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# TypeScript
+*.tsbuildinfo
+.vercel
+.env*.local

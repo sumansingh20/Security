@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "cd frontend && npm install",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://security-api-new.vercel.app/api/:path*"
+    }
+  ]
+}
