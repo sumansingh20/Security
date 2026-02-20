@@ -22,6 +22,12 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
   useEffect(() => {
     setMounted(true);
     
+    // Only check auth if not already initialized (avoid double-check from route layouts)
+    if (isInitialized && isAuthenticated) {
+      setAuthChecked(true);
+      return;
+    }
+
     // Check auth with server on mount
     const verifyAuth = async () => {
       try {

@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body className="bg-gray-50 text-gray-900 min-h-screen antialiased">
+      <body className="bg-gray-50 text-gray-900 min-h-screen antialiased" suppressHydrationWarning>
         <ThemeProvider defaultTheme="light" storageKey="proctorexam-theme">
           {children}
           <Toaster

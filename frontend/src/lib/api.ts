@@ -42,8 +42,13 @@ api.interceptors.response.use(
       await new Promise(r => setTimeout(r, config.__retryCount * 1000));
       return api(config);
     }
-    // On 401, try refreshing session once
-    if (status === 401 && config && !config.__authRetried) {
+    // On 401, try refreshing session ONCE - but NEVER for auth endpoints
+    // to prevent infinite loop (/auth/me → 401 → retry /auth/me → 401 → ...)
+    const url = config?.url || '';
+    const isAuthEndpoint = url.includes('/auth/me') || url.includes('/auth/login') || 
+                           url.includes('/auth/logout') || url.includes('/auth/server-time') ||
+                           url.includes('/auth/dob-login') || url.includes('/auth/register');
+    if (status === 401 && config && !config.__authRetried && !isAuthEndpoint) {
       config.__authRetried = true;
       try {
         // Try /auth/me to refresh the cookie session

@@ -34,6 +34,9 @@ router.post(
 // Seed demo data (protected by secret key)
 router.post('/seed-demo', authController.seedDemo);
 
+// Server time - public, no auth needed (used on login page)
+router.get('/server-time', authController.getServerTime);
+
 router.post(
   '/refresh-token',
   validate(authSchemas.refreshToken),
@@ -48,8 +51,6 @@ router.post('/logout', authController.logout);
 router.get('/me', authController.getMe);
 
 router.get('/session', validateSession, authController.checkSession);
-
-router.get('/server-time', authController.getServerTime);
 
 router.put(
   '/profile',
