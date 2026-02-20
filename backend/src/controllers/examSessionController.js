@@ -5,6 +5,7 @@ import Exam from '../models/Exam.js';
 import Question from '../models/Question.js';
 import User from '../models/User.js';
 import Violation from '../models/Violation.js';
+import Submission from '../models/Submission.js';
 import AppError from '../utils/AppError.js';
 
 // Generate secure session token
@@ -156,7 +157,7 @@ export const examSessionController = {
       // Validate DOB password
       if (!validateDOBPassword(password, student.dateOfBirth)) {
         // Log failed attempt (no submission exists yet, so use AuditLog instead)
-        console.warn(`[DOB-LOGIN] Failed attempt for student ${studentId} on exam ${examId}`);
+        console.warn(`[DOB-LOGIN] Failed attempt for student ${userId} on exam ${examId}`);
         
         throw new AppError('Invalid credentials', 401);
       }
@@ -328,16 +329,38 @@ export const examSessionController = {
           negativeMarking: exam.negativeMarking,
           negativeMarkValue: exam.negativeMarkValue,
         },
-        questions: questions.map((q, index) => ({
-          id: q._id,
-          index,
-          text: q.questionText,
-          type: q.questionType === 'mcq-single' ? 'mcq' : q.questionType === 'mcq-multiple' ? 'mcq' : q.questionType === 'true-false' ? 'true_false' : 'mcq',
-          options: q.options?.map(opt => ({ text: opt.text, _id: opt._id })),
-          marks: q.marks,
-          imageUrl: q.imageUrl,
-          section: q.section,
-        })),
+        questions: questions.map((q, index) => {
+          // Map backend question types to frontend display types
+          let frontendType = 'mcq';
+          switch (q.questionType) {
+            case 'mcq-single': frontendType = 'mcq'; break;
+            case 'mcq-multiple': frontendType = 'mcq_multiple'; break;
+            case 'true-false': frontendType = 'true_false'; break;
+            case 'fill-blank': frontendType = 'short_answer'; break;
+            case 'short-answer': frontendType = 'short_answer'; break;
+            case 'numerical': frontendType = 'numerical'; break;
+            case 'long-answer': frontendType = 'essay'; break;
+            case 'code': frontendType = 'essay'; break;
+            case 'matching': frontendType = 'matching'; break;
+            case 'ordering': frontendType = 'ordering'; break;
+            case 'image-based': frontendType = 'short_answer'; break;
+            default: frontendType = 'mcq'; break;
+          }
+          return {
+            id: q._id,
+            index,
+            text: q.questionText,
+            type: frontendType,
+            backendType: q.questionType,
+            options: q.options?.map(opt => ({ text: opt.text, _id: opt._id })),
+            marks: q.marks,
+            imageUrl: q.imageUrl,
+            matchPairs: q.matchPairs?.map(p => ({ left: p.left, right: p.right })),
+            correctOrder: q.questionType === 'ordering' ? q.correctOrder?.map((_, i) => `Item ${i + 1}`) : undefined,
+            orderItems: q.correctOrder,
+            section: q.section,
+          };
+        }),
         answers: session.answers.map(a => ({
           questionId: a.questionId,
           selectedOption: a.selectedOption,
@@ -483,8 +506,6 @@ export const examSessionController = {
           
           if (q.questionType === 'mcq-single' || q.questionType === 'mcq-multiple' || q.questionType === 'true-false') {
             if (ans.selectedOption !== undefined && ans.selectedOption !== null) {
-              // correctOptions contains ObjectIds of correct option(s)
-              // Find the index of the correct option by matching _id
               const correctOptionIds = (q.correctOptions || []).map(id => id.toString());
               const selectedOptionObj = q.options[ans.selectedOption];
               if (selectedOptionObj && correctOptionIds.includes(selectedOptionObj._id.toString())) {
@@ -494,8 +515,31 @@ export const examSessionController = {
                 wrongCount++;
               }
             }
+          } else if (q.questionType === 'numerical') {
+            const numAnswer = parseFloat(ans.textAnswer);
+            const correctNum = parseFloat(q.correctAnswer);
+            const tolerance = q.answerTolerance || 0;
+            if (!isNaN(numAnswer) && !isNaN(correctNum) && Math.abs(numAnswer - correctNum) <= tolerance) {
+              score += q.marks || 1;
+              correctCount++;
+            } else if (ans.textAnswer) {
+              wrongCount++;
+            }
+          } else if (q.questionType === 'fill-blank' || q.questionType === 'short-answer') {
+            if (ans.textAnswer && q.correctAnswer) {
+              const acceptedAnswers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+              const isCorrect = acceptedAnswers.some(accepted =>
+                ans.textAnswer.trim().toLowerCase() === String(accepted).trim().toLowerCase()
+              );
+              if (isCorrect) {
+                score += q.marks || 1;
+                correctCount++;
+              } else {
+                wrongCount++;
+              }
+            }
           }
-          // essay and short_answer need manual grading
+          // long-answer, code, matching, ordering need manual grading
         }
         
         session.score = score;
@@ -504,6 +548,107 @@ export const examSessionController = {
         session.wrongCount = wrongCount;
         session.questionsAttempted = session.answers.length;
         await session.save();
+
+        // =====================================================
+        // CREATE SUBMISSION RECORD so results appear in the app
+        // =====================================================
+        try {
+          // Check if submission already exists for this student+exam
+          const existingSubmission = await Submission.findOne({
+            exam: session.exam,
+            student: session.student,
+            status: { $in: ['submitted', 'auto-submitted', 'evaluated'] },
+          });
+
+          if (!existingSubmission) {
+            // Build answers array for Submission model
+            const submissionAnswers = [];
+            let qIndex = 0;
+            for (const ans of session.answers) {
+              const q = questionMap.get(ans.questionId.toString());
+              if (!q) continue;
+              qIndex++;
+              
+              const answerEntry = {
+                question: ans.questionId,
+                questionNumber: qIndex,
+                selectedOptions: [],
+                visited: true,
+                markedForReview: false,
+                answeredAt: ans.answeredAt || new Date(),
+                timeTaken: ans.timeTaken || 0,
+                isCorrect: null,
+                marksObtained: 0,
+              };
+
+              // Convert selectedOption index to option ObjectId for MCQ types
+              if ((q.questionType === 'mcq-single' || q.questionType === 'mcq-multiple' || q.questionType === 'true-false') 
+                  && ans.selectedOption !== undefined && ans.selectedOption !== null) {
+                const selectedOpt = q.options[ans.selectedOption];
+                if (selectedOpt) {
+                  answerEntry.selectedOptions = [selectedOpt._id];
+                }
+              }
+
+              submissionAnswers.push(answerEntry);
+            }
+
+            // Also add unanswered questions
+            for (const q of questions) {
+              const alreadyAdded = submissionAnswers.some(a => a.question.toString() === q._id.toString());
+              if (!alreadyAdded) {
+                submissionAnswers.push({
+                  question: q._id,
+                  questionNumber: submissionAnswers.length + 1,
+                  selectedOptions: [],
+                  visited: false,
+                  markedForReview: false,
+                  answeredAt: null,
+                  timeTaken: 0,
+                  isCorrect: null,
+                  marksObtained: 0,
+                });
+              }
+            }
+
+            const submission = await Submission.create({
+              exam: session.exam,
+              student: session.student,
+              attemptNumber: 1,
+              startedAt: session.createdAt,
+              submittedAt: session.submittedAt || new Date(),
+              serverEndTime: session.serverEndTime,
+              answers: submissionAnswers,
+              questionOrder: questions.map(q => q._id),
+              totalMarks: totalMarks,
+              marksObtained: score,
+              percentage: totalMarks > 0 ? (score / totalMarks) * 100 : 0,
+              questionsAttempted: session.answers.length,
+              correctAnswers: correctCount,
+              wrongAnswers: wrongCount,
+              unattempted: questions.length - session.answers.length,
+              status: 'evaluated',
+              submissionType: 'manual',
+              totalViolations: session.violationCount,
+              sessionId: session.sessionToken,
+              ipHash: session.ipAddress,
+              userAgent: session.userAgent,
+            });
+
+            // Run calculateResults for accurate grading with the Question model's checkAnswer
+            try {
+              await submission.calculateResults();
+              submission.status = 'evaluated';
+              await submission.save();
+            } catch (calcErr) {
+              console.error('Calculate results error:', calcErr);
+              // Submission still created with basic scoring
+            }
+          }
+        } catch (submissionErr) {
+          console.error('Submission creation error:', submissionErr);
+          // Don't fail the exam submit if submission creation fails
+        }
       } catch (gradingErr) {
         console.error('Auto-grading error:', gradingErr);
       }

@@ -25,6 +25,7 @@ interface Result {
   marksObtained: number;
   totalMarks: number;
   percentage: number;
+  passed: boolean;
   status: string;
   submittedAt: string;
   totalViolations?: number;
@@ -110,6 +111,7 @@ export default function AdminResultsPage() {
                 <th>Exam</th>
                 <th>Score</th>
                 <th>%</th>
+                <th>Result</th>
                 <th>Status</th>
                 <th>Violations</th>
                 <th>Submitted</th>
@@ -126,6 +128,11 @@ export default function AdminResultsPage() {
                   <td><Link href={`/admin/exams/${result.exam?._id}`} className="lms-link">{result.exam?.title}</Link></td>
                   <td>{result.marksObtained || 0} / {result.totalMarks || 0}</td>
                   <td>{Math.round(result.percentage || 0)}%</td>
+                  <td>
+                    <span className={`lms-badge ${result.passed ? 'lms-badge-success' : 'lms-badge-danger'}`}>
+                      {result.passed ? '✅ PASSED' : '❌ FAILED'}
+                    </span>
+                  </td>
                   <td>
                     <span className={`lms-badge ${result.status === 'evaluated' ? 'lms-badge-success' : result.status === 'submitted' ? 'lms-badge-info' : 'lms-badge-default'}`}>
                       {result.status}

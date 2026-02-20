@@ -127,7 +127,7 @@ export default function SecurityReportPage() {
                     </td>
                     <td className="px-4 py-3 text-sm max-w-xs truncate">{e.description}</td>
                     <td className="px-4 py-3 text-sm">{e.userName || '—'}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-xs">{e.ip || '—'}</td>
+                    <td className="px-4 py-3 text-xs font-mono">{e.ip || '—'}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{new Date(e.timestamp).toLocaleString()}</td>
                   </tr>
                 ))}

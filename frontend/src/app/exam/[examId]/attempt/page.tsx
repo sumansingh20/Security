@@ -8,15 +8,22 @@ interface Question {
   id: string;
   index: number;
   text: string;
-  type: 'mcq' | 'true_false' | 'short_answer' | 'numerical' | 'essay';
-  options?: { text: string }[];
+  type: 'mcq' | 'mcq_multiple' | 'true_false' | 'short_answer' | 'numerical' | 'essay' | 'matching' | 'ordering';
+  backendType?: string;
+  options?: { text: string; _id?: string }[];
   marks: number;
+  imageUrl?: string;
+  matchPairs?: { left: string; right: string }[];
+  orderItems?: string[];
 }
 
 interface Answer {
   questionId: string;
   selectedOption?: number;
+  selectedOptions?: number[];
   textAnswer?: string;
+  matchAnswers?: string[];
+  orderAnswer?: string[];
 }
 
 interface SessionData {
@@ -697,6 +704,39 @@ export default function ExamAttemptPage() {
                     </>
                   )}
 
+                  {currentQ.type === 'mcq_multiple' && currentQ.options && (
+                    <>
+                      <p className="text-sm text-gray-500 mb-2">Select all correct answers:</p>
+                      {currentQ.options.map((option, optIndex) => {
+                        const currentSelected = answers.get(currentQ.id)?.selectedOptions || [];
+                        const isChecked = currentSelected.includes(optIndex);
+                        return (
+                          <label
+                            key={optIndex}
+                            className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                              isChecked
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                const newSelected = isChecked
+                                  ? currentSelected.filter((i: number) => i !== optIndex)
+                                  : [...currentSelected, optIndex];
+                                handleAnswerChange(currentQ.id, { selectedOptions: newSelected, selectedOption: newSelected[0] });
+                              }}
+                              className="w-4 h-4 text-blue-600"
+                            />
+                            <span className="ml-3 text-gray-900">{option.text}</span>
+                          </label>
+                        );
+                      })}
+                    </>
+                  )}
+
                   {currentQ.type === 'true_false' && (
                     <div className="flex space-x-4">
                       {['True', 'False'].map((opt, optIndex) => (
@@ -722,13 +762,20 @@ export default function ExamAttemptPage() {
                   )}
 
                   {(currentQ.type === 'short_answer' || currentQ.type === 'numerical') && (
-                    <input
-                      type={currentQ.type === 'numerical' ? 'number' : 'text'}
-                      value={answers.get(currentQ.id)?.textAnswer || ''}
-                      onChange={(e) => handleAnswerChange(currentQ.id, { textAnswer: e.target.value })}
-                      className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder={currentQ.type === 'numerical' ? 'Enter numerical answer' : 'Type your answer'}
-                    />
+                    <>
+                      {currentQ.imageUrl && (
+                        <div className="mb-4 text-center">
+                          <img src={currentQ.imageUrl} alt="Question" className="max-w-md max-h-64 rounded-lg border mx-auto" />
+                        </div>
+                      )}
+                      <input
+                        type={currentQ.type === 'numerical' ? 'number' : 'text'}
+                        value={answers.get(currentQ.id)?.textAnswer || ''}
+                        onChange={(e) => handleAnswerChange(currentQ.id, { textAnswer: e.target.value })}
+                        className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder={currentQ.type === 'numerical' ? 'Enter numerical answer' : 'Type your answer'}
+                      />
+                    </>
                   )}
 
                   {currentQ.type === 'essay' && (
@@ -737,8 +784,71 @@ export default function ExamAttemptPage() {
                       onChange={(e) => handleAnswerChange(currentQ.id, { textAnswer: e.target.value })}
                       rows={8}
                       className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                      placeholder="Write your answer here..."
+                      placeholder={currentQ.backendType === 'code' ? 'Write your code here...' : 'Write your answer here...'}
+                      style={currentQ.backendType === 'code' ? { fontFamily: 'monospace' } : undefined}
                     />
+                  )}
+
+                  {currentQ.type === 'matching' && currentQ.matchPairs && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-3">Match each item on the left with the correct item on the right:</p>
+                      {currentQ.matchPairs.map((pair, pairIndex) => {
+                        const currentMatchAnswers = answers.get(currentQ.id)?.matchAnswers || [];
+                        const rightOptions = currentQ.matchPairs!.map(p => p.right);
+                        return (
+                          <div key={pairIndex} className="flex items-center gap-4 mb-3 p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium text-gray-900 flex-1">{pair.left}</span>
+                            <span className="text-gray-400">→</span>
+                            <select
+                              value={currentMatchAnswers[pairIndex] || ''}
+                              onChange={(e) => {
+                                const newMatchAnswers = [...currentMatchAnswers];
+                                while (newMatchAnswers.length <= pairIndex) newMatchAnswers.push('');
+                                newMatchAnswers[pairIndex] = e.target.value;
+                                handleAnswerChange(currentQ.id, { matchAnswers: newMatchAnswers, textAnswer: JSON.stringify(newMatchAnswers) });
+                              }}
+                              className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select match...</option>
+                              {rightOptions.map((r, ri) => (
+                                <option key={ri} value={r}>{r}</option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {currentQ.type === 'ordering' && currentQ.orderItems && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-3">Arrange items in the correct order (1 = first):</p>
+                      {(() => {
+                        const currentOrderAnswer = answers.get(currentQ.id)?.orderAnswer || [...(currentQ.orderItems || [])].sort(() => Math.random() - 0.5);
+                        return currentOrderAnswer.map((item: string, itemIndex: number) => (
+                          <div key={itemIndex} className="flex items-center gap-3 mb-2 p-3 bg-gray-50 rounded-lg">
+                            <span className="text-sm font-bold text-gray-400 w-6">{itemIndex + 1}.</span>
+                            <select
+                              value={item}
+                              onChange={(e) => {
+                                const newOrder = [...currentOrderAnswer];
+                                const swapIndex = newOrder.indexOf(e.target.value);
+                                if (swapIndex >= 0) {
+                                  newOrder[swapIndex] = newOrder[itemIndex];
+                                }
+                                newOrder[itemIndex] = e.target.value;
+                                handleAnswerChange(currentQ.id, { orderAnswer: newOrder, textAnswer: JSON.stringify(newOrder) });
+                              }}
+                              className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-blue-500"
+                            >
+                              {(currentQ.orderItems || []).map((opt, oi) => (
+                                <option key={oi} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ));
+                      })()}
+                    </div>
                   )}
                 </div>
 

@@ -276,10 +276,17 @@ submissionSchema.methods.calculateResults = async function() {
     }
 
     const marks = question.checkAnswer(answer.selectedOptions);
-    answer.marksObtained = marks;
-    marksObtained += marks;
 
-    if (marks > 0) {
+    // checkAnswer returns null for manual-grading types (long-answer, code)
+    // Treat null as 0 for auto-calculation; admin can grade later
+    const effectiveMarks = (marks === null || marks === undefined) ? 0 : marks;
+    answer.marksObtained = effectiveMarks;
+    marksObtained += effectiveMarks;
+
+    if (marks === null || marks === undefined) {
+      // Needs manual grading — don't count as correct or wrong
+      answer.isCorrect = null;
+    } else if (marks > 0) {
       correct++;
       answer.isCorrect = true;
     } else {

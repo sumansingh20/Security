@@ -88,7 +88,7 @@ export default function LoginsReportPage() {
                     <td className="px-4 py-3 text-sm">{l.userEmail}</td>
                     <td className="px-4 py-3 text-sm text-center capitalize">{l.role}</td>
                     <td className="px-4 py-3 text-sm">{new Date(l.loginTime).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-xs">{l.ip}</td>
+                    <td className="px-4 py-3 text-xs font-mono">{l.ip}</td>
                     <td className="px-4 py-3 text-sm text-center">
                       <span className={`px-2 py-1 rounded text-xs ${l.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {l.success ? 'Success' : 'Failed'}
