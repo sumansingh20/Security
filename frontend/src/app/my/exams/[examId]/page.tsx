@@ -149,27 +149,22 @@ export default function ExamDetailsPage() {
       {/* Exam Info Grid */}
       <div className="lms-stats-row monitor-stats">
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.05s' }}>
-          <div className="lms-stat-icon">⏱️</div>
           <div className="lms-stat-value">{exam.duration}</div>
           <div className="lms-stat-label">Minutes</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-          <div className="lms-stat-icon">📝</div>
           <div className="lms-stat-value">{exam.questionCount}</div>
           <div className="lms-stat-label">Questions</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.15s' }}>
-          <div className="lms-stat-icon">🏆</div>
           <div className="lms-stat-value">{exam.totalMarks}</div>
           <div className="lms-stat-label">Total Marks</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-          <div className="lms-stat-icon">✅</div>
           <div className="lms-stat-value">{exam.passingMarks}</div>
           <div className="lms-stat-label">Passing Marks</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-          <div className="lms-stat-icon">🔄</div>
           <div className="lms-stat-value">{attemptCount}/{exam.maxAttempts}</div>
           <div className="lms-stat-label">Attempts Used</div>
         </div>
@@ -177,7 +172,7 @@ export default function ExamDetailsPage() {
 
       {/* Time Window */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-        <div className="lms-section-title"><span className="section-icon">📅</span> Examination Window</div>
+        <div className="lms-section-title">Examination Window</div>
         <div className="lms-table-container">
           <table className="lms-table">
             <tbody>
@@ -204,7 +199,7 @@ export default function ExamDetailsPage() {
 
       {/* Instructions */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-        <div className="lms-section-title"><span className="section-icon">📋</span> Exam Instructions</div>
+        <div className="lms-section-title">Exam Instructions</div>
         <div className="lms-info-box-body" style={{ fontSize: '13px', lineHeight: '1.8' }}>
           {exam.instructions ? (
             <div dangerouslySetInnerHTML={{ __html: exam.instructions }} />
@@ -265,7 +260,7 @@ export default function ExamDetailsPage() {
 
       {/* Review Settings */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.25s' }}>
-        <div className="lms-section-title"><span className="section-icon">🔍</span> Review Options</div>
+        <div className="lms-section-title">Review Options</div>
         <div className="lms-info-box-body" style={{ fontSize: '13px' }}>
           {exam.allowReview ? (
             <ul style={{ paddingLeft: '20px', margin: 0, lineHeight: '2' }}>
@@ -281,7 +276,7 @@ export default function ExamDetailsPage() {
 
       {/* Action Section */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.3s' }}>
-        <div className="lms-section-title"><span className="section-icon">🚀</span> Start Examination</div>
+        <div className="lms-section-title">Start Examination</div>
         <div style={{ padding: '20px', textAlign: 'center' }}>
           <p style={{ marginBottom: '16px', color: 'var(--text-muted)' }}>
             Attempts used: <strong>{attemptCount}</strong> of <strong>{exam.maxAttempts}</strong>

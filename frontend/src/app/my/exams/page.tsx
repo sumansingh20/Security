@@ -94,7 +94,7 @@ export default function ExamListPage() {
       <div className="lms-info-box animate-fadeInDown" style={{ marginBottom: '16px' }}>
         <div className="lms-info-box-body">
           <div className="lms-info-row">
-            <div className="lms-info-label">🕐 Server Time:</div>
+            <div className="lms-info-label">Server Time:</div>
             <div className="lms-info-value font-mono pulse-text">{format(serverTime, 'dd MMM yyyy, HH:mm:ss')}</div>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function ExamListPage() {
               style={{ marginTop: '8px' }}
               onClick={() => fetchAvailableExams()}
             >
-              🔄 Retry
+              Retry
             </button>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function ExamListPage() {
 
       {/* Filters */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-        <div className="lms-section-title"><span className="section-icon">🔍</span> Filter &amp; Search</div>
+        <div className="lms-section-title">Filter &amp; Search</div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="lms-form-group" style={{ margin: 0, flex: '1 1 200px' }}>
             <label className="lms-label" htmlFor="examSearch">Search</label>
@@ -166,7 +166,6 @@ export default function ExamListPage() {
       {/* Stats */}
       <div className="lms-stats-row monitor-stats">
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.15s' }}>
-          <div className="lms-stat-icon">📚</div>
           <div className="lms-stat-value">{availableExams.length}</div>
           <div className="lms-stat-label">Total Exams</div>
         </div>
@@ -176,7 +175,6 @@ export default function ExamListPage() {
           <div className="lms-stat-label">Open Now</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-          <div className="lms-stat-icon">✅</div>
           <div className="lms-stat-value">{completedCount}</div>
           <div className="lms-stat-label">Completed</div>
         </div>
@@ -185,13 +183,12 @@ export default function ExamListPage() {
       {/* Exams Table */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.3s' }}>
         <div className="lms-section-title">
-          <span className="section-icon">📋</span>
           {filter === 'all' ? 'All Examinations' : filter === 'available' ? 'Open Examinations' : filter === 'upcoming' ? 'Upcoming Examinations' : filter === 'completed' ? 'Completed Examinations' : 'Closed Examinations'}
         </div>
 
         {filteredExams.length === 0 ? (
           <div className="lms-table-empty empty-state-animated">
-            <div className="empty-icon">📭</div>
+            <div className="empty-icon"></div>
             <div>No examinations found.</div>
           </div>
         ) : (
@@ -255,7 +252,7 @@ export default function ExamListPage() {
       {/* Guidelines */}
       <div className="lms-info-box guidelines-box animate-fadeIn" style={{ animationDelay: '0.4s' }}>
         <div className="lms-info-box-header">
-          <span className="section-icon">📖</span> Examination Guidelines
+          Examination Guidelines
         </div>
         <div className="lms-info-box-body" style={{ fontSize: '12px' }}>
           <ul className="guidelines-list">

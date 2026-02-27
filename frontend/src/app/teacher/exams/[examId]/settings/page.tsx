@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import api from '@/lib/api';
-import SidebarLayout from '@/components/layouts/SidebarLayout';
+import LMSLayout from '@/components/layouts/LMSLayout';
+import toast from 'react-hot-toast';
 
 interface Exam {
   id: string;
@@ -95,6 +97,7 @@ export default function ExamSettingsPage() {
       }
     } catch (error) {
       console.error('Fetch exam error:', error);
+      toast.error('Failed to load exam settings');
     } finally {
       setLoading(false);
     }
@@ -114,7 +117,7 @@ export default function ExamSettingsPage() {
 
   const handleFormChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     if (field === 'batchSize' || field === 'enableBatching') {
       updateBatchPreview(
         field === 'batchSize' ? value : formData.batchSize,
@@ -128,19 +131,19 @@ export default function ExamSettingsPage() {
       setBatchPreview([]);
       return;
     }
-    
+
     const totalStudents = selectedStudents.size;
     const batches = [];
     let remaining = totalStudents;
     let batchNumber = 1;
-    
+
     while (remaining > 0) {
       const count = Math.min(remaining, batchSize);
       batches.push({ batchNumber, studentCount: count });
       remaining -= count;
       batchNumber++;
     }
-    
+
     setBatchPreview(batches);
   };
 
@@ -171,16 +174,16 @@ export default function ExamSettingsPage() {
         ...formData,
         enrolledStudents: Array.from(selectedStudents),
       });
-      
+
       const data = response.data;
       if (data.success) {
-        alert('Settings saved successfully!');
+        toast.success('Settings saved successfully!');
       } else {
-        alert('Failed to save: ' + data.message);
+        toast.error('Failed to save: ' + data.message);
       }
     } catch (error: any) {
       console.error('Save error:', error);
-      alert(error.response?.data?.message || 'Failed to save settings');
+      toast.error(error.response?.data?.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -188,396 +191,349 @@ export default function ExamSettingsPage() {
 
   const handleCreateBatches = async () => {
     if (!formData.enableBatching) {
-      alert('Please enable batching first');
+      toast.error('Please enable batching first');
       return;
     }
-    
+
     if (selectedStudents.size === 0) {
-      alert('Please select students first');
+      toast.error('Please select students first');
       return;
     }
-    
+
     if (!confirm(`Create ${batchPreview.length} batches for ${selectedStudents.size} students?`)) {
       return;
     }
-    
+
     try {
       const response = await api.post(`/exam-engine/${examId}/batches`, {
         batchSize: formData.batchSize,
         studentList: Array.from(selectedStudents),
       });
-      
+
       const data = response.data;
       if (data.success) {
-        alert(`Created ${data.totalBatches} batches successfully!`);
+        toast.success(`Created ${data.totalBatches} batches successfully!`);
         setActiveTab('batches');
       } else {
-        alert('Failed to create batches: ' + data.message);
+        toast.error('Failed to create batches: ' + data.message);
       }
     } catch (error) {
       console.error('Create batches error:', error);
-      alert('Failed to create batches');
+      toast.error('Failed to create batches');
     }
   };
 
   if (loading) {
     return (
-      <SidebarLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+      <LMSLayout pageTitle="Exam Settings">
+        <div className="loading-animated">
+          <div className="loading-spinner"></div>
+          <span>Loading exam settings...</span>
         </div>
-      </SidebarLayout>
+      </LMSLayout>
     );
   }
 
   return (
-    <SidebarLayout>
-      <div className="p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{exam?.title}</h1>
-              <p className="text-sm text-gray-500">{exam?.subject}</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => router.push(`/teacher/exams/${examId}/monitor`)}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Live Monitor
-              </button>
-              <button
-                onClick={() => router.push(`/teacher/exams/${examId}/results`)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                View Results
-              </button>
-            </div>
-          </div>
-        </div>
+    <LMSLayout
+      pageTitle={exam?.title || 'Exam Settings'}
+      breadcrumbs={[
+        { label: 'Teacher' },
+        { label: 'Examinations', href: '/teacher/exams' },
+        { label: exam?.title || 'Exam', href: `/teacher/exams/${examId}` },
+        { label: 'Settings' },
+      ]}
+    >
+      {/* Quick Actions */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <Link href={`/teacher/exams/${examId}`} className="lms-btn">Back to Exam</Link>
+        <Link href={`/teacher/exams/${examId}/monitor`} className="lms-btn lms-btn-primary">Live Monitor</Link>
+        <Link href={`/teacher/exams/${examId}/results`} className="lms-btn">View Results</Link>
+      </div>
 
-        {/* Tabs */}
-        <div className="border-b mb-6">
-          <nav className="flex space-x-8">
-            {['settings', 'students', 'batches'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`py-3 px-1 border-b-2 font-medium text-sm capitalize ${
-                  activeTab === tab
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
+        {(['settings', 'students', 'batches'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`lms-btn ${activeTab === tab ? 'lms-btn-primary' : ''}`}
+            style={{ textTransform: 'capitalize' }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Exam Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Exam Settings</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.enableBatching}
-                      onChange={(e) => handleFormChange('enableBatching', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Enable Batch Mode (for 500+ students)</span>
-                  </label>
-                </div>
-                
-                {formData.enableBatching && (
-                  <div className="ml-6 space-y-4 p-4 bg-blue-50 rounded">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Batch Size
-                      </label>
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+          {/* Exam Settings */}
+          <div className="lms-section animate-fadeIn">
+            <div className="lms-section-title">Exam Settings</div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="lms-form-group" style={{ margin: 0 }}>
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.enableBatching}
+                    onChange={(e) => handleFormChange('enableBatching', e.target.checked)}
+                  />
+                  Enable Batch Mode (for 500+ students)
+                </label>
+              </div>
+
+              {formData.enableBatching && (
+                <div className="lms-info-box" style={{ margin: 0 }}>
+                  <div className="lms-info-box-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="lms-form-group" style={{ margin: 0 }}>
+                      <label className="lms-label">Batch Size</label>
                       <input
                         type="number"
+                        className="lms-input"
                         value={formData.batchSize}
                         onChange={(e) => handleFormChange('batchSize', parseInt(e.target.value))}
                         min={10}
                         max={1000}
-                        className="w-full p-2 border rounded"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Max students per batch (10-1000)</p>
+                      <div className="lms-form-help">Max students per batch (10-1000)</div>
                     </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Buffer Time Between Batches (minutes)
-                      </label>
+                    <div className="lms-form-group" style={{ margin: 0 }}>
+                      <label className="lms-label">Buffer Time Between Batches (minutes)</label>
                       <input
                         type="number"
+                        className="lms-input"
                         value={formData.batchBufferMinutes}
                         onChange={(e) => handleFormChange('batchBufferMinutes', parseInt(e.target.value))}
                         min={5}
                         max={60}
-                        className="w-full p-2 border rounded"
                       />
                     </div>
                   </div>
-                )}
-                
-                <div className="border-t pt-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.negativeMarking}
-                      onChange={(e) => handleFormChange('negativeMarking', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Enable Negative Marking</span>
-                  </label>
                 </div>
-                
-                {formData.negativeMarking && (
-                  <div className="ml-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Negative Mark Value (fraction of marks)
-                    </label>
-                    <select
-                      value={formData.negativeMarkValue}
-                      onChange={(e) => handleFormChange('negativeMarkValue', parseFloat(e.target.value))}
-                      className="w-full p-2 border rounded"
-                      title="Select negative mark value"
-                    >
-                      <option value={0.25}>1/4 (0.25)</option>
-                      <option value={0.33}>1/3 (0.33)</option>
-                      <option value={0.5}>1/2 (0.50)</option>
-                      <option value={1}>Full mark (1.00)</option>
-                    </select>
-                  </div>
-                )}
-                
-                <div className="border-t pt-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.calculatorEnabled}
-                      onChange={(e) => handleFormChange('calculatorEnabled', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Enable Calculator</span>
-                  </label>
-                </div>
-                
-                {formData.calculatorEnabled && (
-                  <div className="ml-6">
-                    <select
-                      value={formData.calculatorType}
-                      onChange={(e) => handleFormChange('calculatorType', e.target.value)}
-                      className="w-full p-2 border rounded"
-                      title="Select calculator type"
-                    >
-                      <option value="basic">Basic Calculator</option>
-                      <option value="scientific">Scientific Calculator</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Proctoring Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Proctoring Settings</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max Violations Before Auto-Submit
-                  </label>
+              )}
+
+              <div className="lms-form-group" style={{ margin: 0 }}>
+                <label className="lms-checkbox-label">
                   <input
-                    type="number"
-                    value={formData.maxViolationsBeforeSubmit}
-                    onChange={(e) => handleFormChange('maxViolationsBeforeSubmit', parseInt(e.target.value))}
-                    min={1}
-                    max={20}
-                    className="w-full p-2 border rounded"
+                    type="checkbox"
+                    checked={formData.negativeMarking}
+                    onChange={(e) => handleFormChange('negativeMarking', e.target.checked)}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.detectTabSwitch}
-                      onChange={(e) => handleFormChange('detectTabSwitch', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Detect Tab/Window Switch</span>
-                  </label>
-                  
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.detectCopyPaste}
-                      onChange={(e) => handleFormChange('detectCopyPaste', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Detect Copy/Paste Attempts</span>
-                  </label>
-                  
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.blockRightClick}
-                      onChange={(e) => handleFormChange('blockRightClick', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Block Right-Click</span>
-                  </label>
-                </div>
-                
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-4">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Note:</strong> Session binding (IP + Device) is always enabled. 
-                    Students cannot login from multiple devices.
-                  </p>
-                </div>
+                  Enable Negative Marking
+                </label>
               </div>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <button
-                onClick={handleSaveSettings}
-                disabled={saving}
-                className="px-6 py-2 bg-blue-900 text-white rounded hover:bg-blue-800 disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Settings'}
-              </button>
+
+              {formData.negativeMarking && (
+                <div className="lms-form-group" style={{ margin: 0, paddingLeft: '24px' }}>
+                  <label className="lms-label">Negative Mark Value</label>
+                  <select
+                    className="lms-select"
+                    value={formData.negativeMarkValue}
+                    onChange={(e) => handleFormChange('negativeMarkValue', parseFloat(e.target.value))}
+                    title="Select negative mark value"
+                  >
+                    <option value={0.25}>1/4 (0.25)</option>
+                    <option value={0.33}>1/3 (0.33)</option>
+                    <option value={0.5}>1/2 (0.50)</option>
+                    <option value={1}>Full mark (1.00)</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="lms-form-group" style={{ margin: 0 }}>
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.calculatorEnabled}
+                    onChange={(e) => handleFormChange('calculatorEnabled', e.target.checked)}
+                  />
+                  Enable Calculator
+                </label>
+              </div>
+
+              {formData.calculatorEnabled && (
+                <div className="lms-form-group" style={{ margin: 0, paddingLeft: '24px' }}>
+                  <select
+                    className="lms-select"
+                    value={formData.calculatorType}
+                    onChange={(e) => handleFormChange('calculatorType', e.target.value)}
+                    title="Select calculator type"
+                  >
+                    <option value="basic">Basic Calculator</option>
+                    <option value="scientific">Scientific Calculator</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
-        )}
 
-        {/* Students Tab */}
-        {activeTab === 'students' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h2 className="font-semibold text-gray-900">Enrolled Students</h2>
-                <span className="text-sm text-gray-500">
-                  {selectedStudents.size} of {students.length} selected
-                </span>
+          {/* Proctoring Settings */}
+          <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+            <div className="lms-section-title">Proctoring Settings</div>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="lms-form-group" style={{ margin: 0 }}>
+                <label className="lms-label">Max Violations Before Auto-Submit</label>
+                <input
+                  type="number"
+                  className="lms-input"
+                  style={{ width: '120px' }}
+                  value={formData.maxViolationsBeforeSubmit}
+                  onChange={(e) => handleFormChange('maxViolationsBeforeSubmit', parseInt(e.target.value))}
+                  min={1}
+                  max={20}
+                />
               </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handleSelectAll}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  {selectedStudents.size === students.length ? 'Deselect All' : 'Select All'}
-                </button>
-                {formData.enableBatching && selectedStudents.size > 0 && (
-                  <button
-                    onClick={handleCreateBatches}
-                    className="px-4 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                  >
-                    Create Batches ({batchPreview.length})
-                  </button>
-                )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.detectTabSwitch}
+                    onChange={(e) => handleFormChange('detectTabSwitch', e.target.checked)}
+                  />
+                  Detect Tab/Window Switch
+                </label>
+
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.detectCopyPaste}
+                    onChange={(e) => handleFormChange('detectCopyPaste', e.target.checked)}
+                  />
+                  Detect Copy/Paste Attempts
+                </label>
+
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.blockRightClick}
+                    onChange={(e) => handleFormChange('blockRightClick', e.target.checked)}
+                  />
+                  Block Right-Click
+                </label>
+              </div>
+
+              <div className="lms-alert lms-alert-warning" style={{ margin: 0 }}>
+                <strong>Note:</strong> Session binding (IP + Device) is always enabled.
+                Students cannot login from multiple devices.
               </div>
             </div>
-            
-            {/* Batch Preview */}
-            {formData.enableBatching && batchPreview.length > 0 && (
-              <div className="p-4 bg-blue-50 border-b">
-                <p className="text-sm font-medium text-blue-900 mb-2">Batch Preview:</p>
-                <div className="flex flex-wrap gap-2">
-                  {batchPreview.map((batch) => (
-                    <span key={batch.batchNumber} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                      Batch {batch.batchNumber}: {batch.studentCount} students
-                    </span>
-                  ))}
-                </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div style={{ marginTop: '16px' }}>
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="lms-btn lms-btn-primary"
+          >
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+      )}
+
+      {/* Students Tab */}
+      {activeTab === 'students' && (
+        <div className="lms-section animate-fadeIn">
+          <div className="lms-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Enrolled Students ({selectedStudents.size} of {students.length} selected)</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button onClick={handleSelectAll} className="lms-btn lms-btn-sm">
+                {selectedStudents.size === students.length ? 'Deselect All' : 'Select All'}
+              </button>
+              {formData.enableBatching && selectedStudents.size > 0 && (
+                <button onClick={handleCreateBatches} className="lms-btn lms-btn-sm lms-btn-success">
+                  Create Batches ({batchPreview.length})
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Batch Preview */}
+          {formData.enableBatching && batchPreview.length > 0 && (
+            <div className="lms-alert lms-alert-info" style={{ margin: '0 0 12px' }}>
+              <strong>Batch Preview:</strong>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                {batchPreview.map((batch) => (
+                  <span key={batch.batchNumber} className="lms-badge">
+                    Batch {batch.batchNumber}: {batch.studentCount} students
+                  </span>
+                ))}
               </div>
-            )}
-            
-            <div className="overflow-x-auto max-h-96 overflow-y-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-12">
+            </div>
+          )}
+
+          <div className="lms-table-container" style={{ maxHeight: '400px', overflow: 'auto' }}>
+            <table className="lms-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.size === students.length && students.length > 0}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
+                  <th>Student ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Semester</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((student) => (
+                  <tr
+                    key={student._id}
+                    style={selectedStudents.has(student._id) ? { background: 'rgba(59, 130, 246, 0.05)' } : {}}
+                  >
+                    <td>
                       <input
                         type="checkbox"
-                        checked={selectedStudents.size === students.length && students.length > 0}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 text-blue-600 rounded"
+                        checked={selectedStudents.has(student._id)}
+                        onChange={() => handleToggleStudent(student._id)}
                       />
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Semester</th>
+                    </td>
+                    <td className="font-mono">{student.studentId || student.rollNumber || '-'}</td>
+                    <td><strong>{student.firstName} {student.lastName}</strong></td>
+                    <td style={{ fontSize: '12px' }}>{student.email}</td>
+                    <td>{student.department || '-'}</td>
+                    <td>{student.semester || '-'}</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {students.map((student) => (
-                    <tr 
-                      key={student._id} 
-                      className={`hover:bg-gray-50 ${selectedStudents.has(student._id) ? 'bg-blue-50' : ''}`}
-                    >
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedStudents.has(student._id)}
-                          onChange={() => handleToggleStudent(student._id)}
-                          className="w-4 h-4 text-blue-600 rounded"
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {student.studentId || student.rollNumber || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {student.firstName} {student.lastName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{student.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{student.department || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{student.semester || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="p-4 border-t">
-              <button
-                onClick={handleSaveSettings}
-                disabled={saving}
-                className="px-6 py-2 bg-blue-900 text-white rounded hover:bg-blue-800 disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Student Assignments'}
-              </button>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
 
-        {/* Batches Tab */}
-        {activeTab === 'batches' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Batch Management</h2>
-            <p className="text-gray-500 mb-4">
-              Batches will be loaded from the Live Monitor page. Go to Live Monitor to manage batches during the exam.
-            </p>
+          <div style={{ padding: '16px' }}>
             <button
-              onClick={() => router.push(`/teacher/exams/${examId}/monitor`)}
-              className="px-6 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
+              onClick={handleSaveSettings}
+              disabled={saving}
+              className="lms-btn lms-btn-primary"
             >
-              Open Live Monitor
+              {saving ? 'Saving...' : 'Save Student Assignments'}
             </button>
           </div>
-        )}
-      </div>
-    </SidebarLayout>
+        </div>
+      )}
+
+      {/* Batches Tab */}
+      {activeTab === 'batches' && (
+        <div className="lms-section animate-fadeIn">
+          <div className="lms-section-title">Batch Management</div>
+          <div style={{ padding: '20px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Batches will be loaded from the Live Monitor page. Go to Live Monitor to manage batches during the exam.
+            </p>
+            <Link href={`/teacher/exams/${examId}/monitor`} className="lms-btn lms-btn-primary">
+              Open Live Monitor
+            </Link>
+          </div>
+        </div>
+      )}
+    </LMSLayout>
   );
 }

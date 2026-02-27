@@ -107,19 +107,19 @@ export default function ProfilePage() {
 
   const getRoleIcon = () => {
     switch (user?.role) {
-      case 'admin': return '🛡️';
-      case 'teacher': return '📚';
-      case 'student': return '🎓';
-      default: return '👤';
+      case 'admin': return 'A';
+      case 'teacher': return 'T';
+      case 'student': return 'S';
+      default: return 'U';
     }
   };
 
   const dashboardLink = user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'teacher' ? '/teacher' : '/my';
 
   const tabs = [
-    { id: 'profile' as const, label: 'Profile', icon: '👤' },
-    { id: 'security' as const, label: 'Security', icon: '🔒' },
-    { id: 'activity' as const, label: 'Activity', icon: '📊' },
+    { id: 'profile' as const, label: 'Profile', icon: '' },
+    { id: 'security' as const, label: 'Security', icon: '' },
+    { id: 'activity' as const, label: 'Activity', icon: '' },
   ];
 
   return (
@@ -190,7 +190,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-lg">👤</div>
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-lg"></div>
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Personal Information</h2>
                       <p className="text-xs text-gray-500">Manage your personal details</p>
@@ -201,7 +201,7 @@ export default function ProfilePage() {
                       onClick={() => setIsEditing(true)}
                       className="lms-btn lms-btn-primary text-sm"
                     >
-                      ✏️ Edit Profile
+                      Edit Profile
                     </button>
                   )}
                 </div>
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                               <span className="animate-spin inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
                               Saving...
                             </span>
-                          ) : '✅ Save Changes'}
+                          ) : 'Save Changes'}
                         </button>
                         <button
                           type="button"
@@ -273,9 +273,9 @@ export default function ProfilePage() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {[
-                        { label: 'First Name', value: user?.firstName, icon: '👤' },
-                        { label: 'Last Name', value: user?.lastName, icon: '👤' },
-                        { label: 'Email Address', value: user?.email, icon: '📧' },
+                        { label: 'First Name', value: user?.firstName, icon: '' },
+                        { label: 'Last Name', value: user?.lastName, icon: '' },
+                        { label: 'Email Address', value: user?.email, icon: '' },
                         { label: 'Role', value: user?.role, icon: getRoleIcon(), capitalize: true },
                         ...((user as any)?.studentId ? [{ label: 'Student ID', value: (user as any).studentId, icon: '🆔' }] : []),
                         ...((user as any)?.employeeId ? [{ label: 'Employee ID', value: (user as any).employeeId, icon: '🆔' }] : []),
@@ -302,7 +302,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-lg">📈</div>
+                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-lg"></div>
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Account Overview</h2>
                       <p className="text-xs text-gray-500">Your account summary at a glance</p>
@@ -311,10 +311,10 @@ export default function ProfilePage() {
                 </div>
                 <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: 'Account Type', value: user?.role?.toUpperCase() || 'N/A', color: 'bg-blue-50 text-blue-700', icon: '🏷️' },
-                    { label: 'Status', value: 'Active', color: 'bg-green-50 text-green-700', icon: '✅' },
-                    { label: 'Last Login', value: 'Today', color: 'bg-purple-50 text-purple-700', icon: '🕐' },
-                    { label: 'Member Since', value: new Date().getFullYear().toString(), color: 'bg-orange-50 text-orange-700', icon: '📅' },
+                    { label: 'Account Type', value: user?.role?.toUpperCase() || 'N/A', color: 'bg-blue-50 text-blue-700', icon: '' },
+                    { label: 'Status', value: 'Active', color: 'bg-green-50 text-green-700', icon: '' },
+                    { label: 'Last Login', value: 'Today', color: 'bg-purple-50 text-purple-700', icon: '' },
+                    { label: 'Member Since', value: new Date().getFullYear().toString(), color: 'bg-orange-50 text-orange-700', icon: '' },
                   ].map((stat, i) => (
                     <div
                       key={stat.label}
@@ -337,7 +337,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-lg">🔑</div>
+                    <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center text-lg"></div>
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Change Password</h2>
                       <p className="text-xs text-gray-500">Update your password to keep your account secure</p>
@@ -396,7 +396,7 @@ export default function ProfilePage() {
                           <span className="animate-spin inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
                           Changing...
                         </span>
-                      ) : '🔒 Update Password'}
+                      ) : 'Update Password'}
                     </button>
                   </form>
                 </div>
@@ -406,7 +406,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-lg">🛡️</div>
+                    <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-lg"></div>
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Security Tips</h2>
                       <p className="text-xs text-gray-500">Best practices to keep your account safe</p>
@@ -416,10 +416,10 @@ export default function ProfilePage() {
                 <div className="p-6">
                   <div className="space-y-3">
                     {[
-                      { tip: 'Use a strong, unique password with at least 8 characters', icon: '🔐' },
-                      { tip: 'Never share your login credentials with anyone', icon: '🚫' },
-                      { tip: 'Log out when using shared or public computers', icon: '🖥️' },
-                      { tip: 'Report any suspicious activity to your administrator', icon: '⚠️' },
+                      { tip: 'Use a strong, unique password with at least 8 characters', icon: '' },
+                      { tip: 'Never share your login credentials with anyone', icon: '' },
+                      { tip: 'Log out when using shared or public computers', icon: '' },
+                      { tip: 'Report any suspicious activity to your administrator', icon: '' },
                     ].map((item, i) => (
                       <div
                         key={i}
@@ -442,7 +442,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-lg">🕐</div>
+                    <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-lg"></div>
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Current Session</h2>
                       <p className="text-xs text-gray-500">Details about your active session</p>
@@ -452,8 +452,8 @@ export default function ProfilePage() {
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
-                      { label: 'Browser', value: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Other') : 'Unknown', icon: '🌐' },
-                      { label: 'Login Time', value: new Date().toLocaleTimeString(), icon: '⏰' },
+                      { label: 'Browser', value: typeof navigator !== 'undefined' ? (navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Other') : 'Unknown', icon: '' },
+                      { label: 'Login Time', value: new Date().toLocaleTimeString(), icon: '' },
                       { label: 'Session Status', value: 'Active', icon: '🟢' },
                     ].map((info, i) => (
                       <div
@@ -476,7 +476,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center text-lg">🔗</div>
+                    <div className="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center text-lg"></div>
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Quick Links</h2>
                       <p className="text-xs text-gray-500">Navigate to common areas</p>
@@ -485,10 +485,10 @@ export default function ProfilePage() {
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
-                    { label: 'Dashboard', href: dashboardLink, icon: '📊', desc: 'View your main dashboard' },
-                    { label: 'My Exams', href: user?.role === 'student' ? '/my/exams' : user?.role === 'teacher' ? '/teacher/exams' : '/admin/exams', icon: '📝', desc: 'Manage or take exams' },
-                    { label: 'Help Center', href: '/help', icon: '❓', desc: 'Get help and support' },
-                    { label: 'Reset Password', href: '/forgot-password', icon: '🔑', desc: 'Change your password via email' },
+                    { label: 'Dashboard', href: dashboardLink, icon: '', desc: 'View your main dashboard' },
+                    { label: 'My Exams', href: user?.role === 'student' ? '/my/exams' : user?.role === 'teacher' ? '/teacher/exams' : '/admin/exams', icon: '', desc: 'Manage or take exams' },
+                    { label: 'Help Center', href: '/help', icon: '', desc: 'Get help and support' },
+                    { label: 'Reset Password', href: '/forgot-password', icon: '', desc: 'Change your password via email' },
                   ].map((link, i) => (
                     <Link
                       key={link.label}

@@ -27,13 +27,15 @@ import toast from 'react-hot-toast';
 interface Question {
   _id: string;
   questionText: string;
-  questionType: 'MCQ' | 'MSQ' | 'numerical' | 'descriptive';
+  questionType: string;
   marks: number;
-  options?: { text: string; isCorrect: boolean }[];
+  options?: { _id?: string; text: string; isCorrect: boolean }[];
+  correctOptions?: string[];
   correctAnswer?: string | number;
   explanation?: string;
   imageUrl?: string;
   category?: string;
+  section?: string;
 }
 
 interface Exam {
@@ -47,20 +49,21 @@ interface Exam {
   endTime: string;
   totalMarks: number;
   passingMarks: number;
-  shuffleQuestions: boolean;
-  shuffleOptions: boolean;
+  randomizeQuestions: boolean;
+  randomizeOptions: boolean;
   maxAttempts: number;
   allowReview: boolean;
-  showCorrectAnswers: 'never' | 'immediately' | 'after_close';
-  showExplanations: 'never' | 'immediately' | 'after_close';
-  showMarks: boolean;
+  showCorrectAnswers: boolean;
+  showExplanations: boolean;
   calculatorType: 'none' | 'basic' | 'scientific';
-  requireFullscreen: boolean;
+  calculatorEnabled: boolean;
+  enableProctoring: boolean;
   detectTabSwitch: boolean;
   detectCopyPaste: boolean;
-  maxViolations: number;
+  maxViolationsBeforeSubmit: number;
   blockRightClick: boolean;
-  blockKeyboardShortcuts: boolean;
+  negativeMarking: boolean;
+  negativeMarkValue: number;
   status: 'draft' | 'published' | 'ongoing' | 'completed' | 'archived';
   questions: Question[];
 }
@@ -406,14 +409,14 @@ export default function EditExamPage() {
                   />
                   <Checkbox
                     label="Shuffle within questions"
-                    checked={exam.shuffleOptions}
-                    onChange={(e) => updateExam('shuffleOptions', e.target.checked)}
+                    checked={exam.randomizeOptions}
+                    onChange={(e) => updateExam('randomizeOptions', e.target.checked)}
                     description="Shuffle the order of options"
                   />
                   <Checkbox
                     label="Shuffle questions"
-                    checked={exam.shuffleQuestions}
-                    onChange={(e) => updateExam('shuffleQuestions', e.target.checked)}
+                    checked={exam.randomizeQuestions}
+                    onChange={(e) => updateExam('randomizeQuestions', e.target.checked)}
                     description="Shuffle the order of questions"
                   />
                 </div>
@@ -432,28 +435,17 @@ export default function EditExamPage() {
                   />
                   {exam.allowReview && (
                     <>
-                      <Select
-                        label="Show correct answers"
-                        value={exam.showCorrectAnswers}
-                        onChange={(e) => updateExam('showCorrectAnswers', e.target.value as any)}
-                      >
-                        <option value="never">Never</option>
-                        <option value="immediately">Immediately after the attempt</option>
-                        <option value="after_close">After the quiz is closed</option>
-                      </Select>
-                      <Select
-                        label="Show explanations"
-                        value={exam.showExplanations}
-                        onChange={(e) => updateExam('showExplanations', e.target.value as any)}
-                      >
-                        <option value="never">Never</option>
-                        <option value="immediately">Immediately after the attempt</option>
-                        <option value="after_close">After the quiz is closed</option>
-                      </Select>
                       <Checkbox
-                        label="Show marks"
-                        checked={exam.showMarks}
-                        onChange={(e) => updateExam('showMarks', e.target.checked)}
+                        label="Show correct answers"
+                        checked={exam.showCorrectAnswers}
+                        onChange={(e) => updateExam('showCorrectAnswers', e.target.checked)}
+                        description="Show correct answers during review"
+                      />
+                      <Checkbox
+                        label="Show explanations"
+                        checked={exam.showExplanations}
+                        onChange={(e) => updateExam('showExplanations', e.target.checked)}
+                        description="Show answer explanations during review"
                       />
                     </>
                   )}
@@ -485,9 +477,9 @@ export default function EditExamPage() {
               {expandedSections.antiCheating && (
                 <div className="p-6 space-y-4">
                   <Checkbox
-                    label="Require fullscreen mode"
-                    checked={exam.requireFullscreen}
-                    onChange={(e) => updateExam('requireFullscreen', e.target.checked)}
+                    label="Enable proctoring"
+                    checked={exam.enableProctoring}
+                    onChange={(e) => updateExam('enableProctoring', e.target.checked)}
                   />
                   <Checkbox
                     label="Detect tab/window switching"
@@ -504,18 +496,13 @@ export default function EditExamPage() {
                     checked={exam.blockRightClick}
                     onChange={(e) => updateExam('blockRightClick', e.target.checked)}
                   />
-                  <Checkbox
-                    label="Block keyboard shortcuts"
-                    checked={exam.blockKeyboardShortcuts}
-                    onChange={(e) => updateExam('blockKeyboardShortcuts', e.target.checked)}
-                  />
                   <Input
-                    label="Maximum violations"
+                    label="Maximum violations before auto-submit"
                     type="number"
                     min={1}
                     max={20}
-                    value={exam.maxViolations}
-                    onChange={(e) => updateExam('maxViolations', parseInt(e.target.value) || 5)}
+                    value={exam.maxViolationsBeforeSubmit}
+                    onChange={(e) => updateExam('maxViolationsBeforeSubmit', parseInt(e.target.value) || 5)}
                   />
                 </div>
               )}
@@ -610,12 +597,18 @@ function QuestionsList({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-xs px-2 py-0.5 rounded ${
-                      question.questionType === 'MCQ' ? 'bg-blue-100 text-blue-700' :
-                      question.questionType === 'MSQ' ? 'bg-purple-100 text-purple-700' :
+                      question.questionType === 'mcq-single' ? 'bg-blue-100 text-blue-700' :
+                      question.questionType === 'mcq-multiple' ? 'bg-purple-100 text-purple-700' :
                       question.questionType === 'numerical' ? 'bg-green-100 text-green-700' :
+                      question.questionType === 'true-false' ? 'bg-yellow-100 text-yellow-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
-                      {question.questionType.toUpperCase()}
+                      {question.questionType === 'mcq-single' ? 'MCQ' :
+                       question.questionType === 'mcq-multiple' ? 'MSQ' :
+                       question.questionType === 'true-false' ? 'T/F' :
+                       question.questionType === 'long-answer' ? 'Essay' :
+                       question.questionType === 'short-answer' ? 'Short' :
+                       question.questionType.toUpperCase()}
                     </span>
                     <span className="text-sm text-gray-500">{question.marks} mark(s)</span>
                     {question.category && (

@@ -114,7 +114,6 @@ export default function ResultDetailPage() {
         className={`lms-alert ${result.passed ? 'lms-alert-success' : 'lms-alert-error'} animate-fadeIn`}
         style={{ textAlign: 'center' }}
       >
-        <div style={{ fontSize: '36px', marginBottom: '8px' }}>{result.passed ? '🎉' : '😔'}</div>
         <div className="lms-alert-title" style={{ fontSize: '20px' }}>
           {result.passed ? 'EXAMINATION PASSED' : 'EXAMINATION FAILED'}
         </div>
@@ -129,12 +128,12 @@ export default function ResultDetailPage() {
       {/* Score Breakdown Cards */}
       <div className="lms-stats-row monitor-stats">
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.05s' }}>
-          <div className="lms-stat-icon">⏱️</div>
+          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value">{formatTime(result.timeTaken)}</div>
           <div className="lms-stat-label">Time Taken</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-          <div className="lms-stat-icon">📝</div>
+          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value">{result.questionsAttempted}/{totalQuestions}</div>
           <div className="lms-stat-label">Attempted</div>
         </div>
@@ -162,13 +161,13 @@ export default function ResultDetailPage() {
             className={`lms-btn ${activeTab === 'overview' ? 'lms-btn-primary' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            📊 Overview
+            Overview
           </button>
           <button
             className={`lms-btn ${activeTab === 'questions' ? 'lms-btn-primary' : ''}`}
             onClick={() => setActiveTab('questions')}
           >
-            📋 Question Review ({questions.length})
+            Question Review ({questions.length})
           </button>
         </div>
       )}
@@ -177,7 +176,7 @@ export default function ResultDetailPage() {
       {activeTab === 'overview' && (
         <>
           <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-            <div className="lms-section-title"><span className="section-icon">📄</span> Exam Information</div>
+            <div className="lms-section-title">Exam Information</div>
             <div className="lms-table-container">
               <table className="lms-table">
                 <tbody>
@@ -203,7 +202,7 @@ export default function ResultDetailPage() {
 
           {/* Score Summary */}
           <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-            <div className="lms-section-title"><span className="section-icon">🏆</span> Score Breakdown</div>
+            <div className="lms-section-title">Score Breakdown</div>
             <div style={{ padding: '20px' }}>
               {/* Score Bar */}
               <div style={{ marginBottom: '20px' }}>
@@ -268,7 +267,7 @@ export default function ResultDetailPage() {
       {/* Questions Tab */}
       {activeTab === 'questions' && questions.length > 0 && (
         <div className="lms-section animate-fadeIn">
-          <div className="lms-section-title"><span className="section-icon">📋</span> Question-by-Question Review</div>
+          <div className="lms-section-title">Question-by-Question Review</div>
           <div style={{ padding: '16px' }}>
             {questions.map((q, index) => {
               const studentAnswerIds = q.studentAnswer || [];
@@ -384,7 +383,7 @@ export default function ResultDetailPage() {
                           fontSize: '12px',
                         }}
                       >
-                        <strong>💡 Explanation:</strong>
+                        <strong>Explanation:</strong>
                         <div style={{ marginTop: '4px', lineHeight: '1.6' }}>{q.explanation}</div>
                       </div>
                     )}

@@ -105,9 +105,9 @@ export default function SessionInspectorPage() {
       case 'active': return '🟢';
       case 'submitted': return '✅';
       case 'force_submitted': return '⚡';
-      case 'expired': return '⏰';
+      case 'expired': return '';
       case 'violation_terminated': return '🚫';
-      default: return '📋';
+      default: return '';
     }
   };
 
@@ -174,11 +174,11 @@ export default function SessionInspectorPage() {
               <span className="font-medium">LIVE</span>
             </div>
             <div>
-              <span style={{ opacity: 0.8 }}>🕐 Server Time:</span>
+              <span style={{ opacity: 0.8 }}>Server Time:</span>
               <span className="font-mono ml-2 pulse-text">{format(serverTime, 'dd/MM/yyyy HH:mm:ss')}</span>
             </div>
             <div>
-              <span style={{ opacity: 0.8 }}>⏱️ Auto-refresh:</span>
+              <span style={{ opacity: 0.8 }}>Auto-refresh:</span>
               <span className="font-mono ml-2">5 seconds</span>
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function SessionInspectorPage() {
           {activeSessions.length > 0 && <div className="live-indicator" style={{ position: 'absolute', top: '10px', right: '10px' }}></div>}
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.15s' }}>
-          <div className="lms-stat-icon">✅</div>
+          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value">{submittedSessions.length}</div>
           <div className="lms-stat-label">Submitted</div>
         </div>
@@ -207,7 +207,7 @@ export default function SessionInspectorPage() {
           <div className="lms-stat-label">With Violations</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-          <div className="lms-stat-icon">📊</div>
+          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value">{sessions.length}</div>
           <div className="lms-stat-label">Total Sessions</div>
         </div>
@@ -226,7 +226,7 @@ export default function SessionInspectorPage() {
 
       {/* Filters */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.35s' }}>
-        <div className="lms-section-title"><span className="section-icon">🔍</span> Filter Sessions</div>
+        <div className="lms-section-title"><span className="section-icon"></span> Filter Sessions</div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div className="lms-form-group" style={{ margin: 0, minWidth: '150px' }}>
             <label className="lms-label">Status</label>
@@ -238,10 +238,10 @@ export default function SessionInspectorPage() {
             >
               <option value="all">All Sessions</option>
               <option value="active">🟢 Active Only</option>
-              <option value="submitted">✅ Submitted</option>
-              <option value="force_submitted">⚡ Force Submitted</option>
-              <option value="expired">⏰ Expired</option>
-              <option value="violation_terminated">🚫 Violation Terminated</option>
+              <option value="submitted">Submitted</option>
+              <option value="force_submitted">Force Submitted</option>
+              <option value="expired">Expired</option>
+              <option value="violation_terminated">Violation Terminated</option>
             </select>
           </div>
           <div className="lms-form-group" style={{ margin: 0, flex: '1 1 200px' }}>
@@ -259,13 +259,13 @@ export default function SessionInspectorPage() {
 
       {/* Sessions Table */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.4s' }}>
-        <div className="lms-section-title"><span className="section-icon">📋</span> Exam Sessions</div>
+        <div className="lms-section-title"><span className="section-icon"></span> Exam Sessions</div>
         
         {error ? (
           <div className="lms-alert lms-alert-danger">{error}</div>
         ) : sessions.length === 0 ? (
           <div className="lms-table-empty empty-state-animated">
-            <div className="empty-icon">🎓</div>
+            <div className="empty-icon"></div>
             <div>No sessions found matching your criteria.</div>
           </div>
         ) : (
@@ -328,7 +328,7 @@ export default function SessionInspectorPage() {
                     <td className="text-xs">{format(new Date(session.lastActivityAt), 'HH:mm:ss')}</td>
                     <td>
                       <button className="lms-btn lms-btn-sm" onClick={() => setSelectedSession(session)}>
-                        🔍 Inspect
+                        Inspect
                       </button>
                     </td>
                   </tr>
@@ -342,7 +342,7 @@ export default function SessionInspectorPage() {
       {/* Guidelines */}
       <div className="lms-info-box guidelines-box animate-fadeIn" style={{ animationDelay: '0.5s' }}>
         <div className="lms-info-box-header">
-          <span className="section-icon">📖</span> Session Monitoring Guidelines
+          <span className="section-icon"></span> Session Monitoring Guidelines
         </div>
         <div className="lms-info-box-body text-xs">
           <ul className="guidelines-list">
@@ -359,24 +359,24 @@ export default function SessionInspectorPage() {
         <div className="lms-modal-overlay animate-fadeIn" onClick={() => setSelectedSession(null)}>
           <div className="lms-modal animate-scaleIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', width: '95%' }}>
             <div className="lms-modal-header">
-              <h3><span className="section-icon">🔍</span> Session Details</h3>
+              <h3><span className="section-icon"></span> Session Details</h3>
               <button className="lms-modal-close" onClick={() => setSelectedSession(null)}>×</button>
             </div>
             <div className="lms-modal-body">
               <div className="lms-table-container">
                 <table className="lms-table">
                   <tbody>
-                    <tr><td className="text-muted" style={{ width: '150px' }}>👤 Student</td><td><strong>{selectedSession.student.firstName} {selectedSession.student.lastName}</strong></td></tr>
+                    <tr><td className="text-muted" style={{ width: '150px' }}>Student</td><td><strong>{selectedSession.student.firstName} {selectedSession.student.lastName}</strong></td></tr>
                     <tr><td className="text-muted">🆔 Student ID</td><td>{selectedSession.student.studentId}</td></tr>
-                    <tr><td className="text-muted">📧 Email</td><td>{selectedSession.student.email}</td></tr>
-                    <tr><td className="text-muted">📝 Exam</td><td>{selectedSession.exam.title}</td></tr>
-                    <tr><td className="text-muted">📊 Batch</td><td>Batch {selectedSession.batch}</td></tr>
-                    <tr><td className="text-muted">▶️ Started At</td><td>{format(new Date(selectedSession.startedAt), 'dd/MM/yyyy HH:mm:ss')}</td></tr>
-                    <tr><td className="text-muted">⏱️ Server End</td><td>{format(new Date(selectedSession.serverEndTime), 'dd/MM/yyyy HH:mm:ss')}</td></tr>
-                    <tr><td className="text-muted">⏳ Remaining</td><td className="font-mono">{getRemainingTime(selectedSession)}</td></tr>
+                    <tr><td className="text-muted">Email</td><td>{selectedSession.student.email}</td></tr>
+                    <tr><td className="text-muted">Exam</td><td>{selectedSession.exam.title}</td></tr>
+                    <tr><td className="text-muted">Batch</td><td>Batch {selectedSession.batch}</td></tr>
+                    <tr><td className="text-muted">Started At</td><td>{format(new Date(selectedSession.startedAt), 'dd/MM/yyyy HH:mm:ss')}</td></tr>
+                    <tr><td className="text-muted">Server End</td><td>{format(new Date(selectedSession.serverEndTime), 'dd/MM/yyyy HH:mm:ss')}</td></tr>
+                    <tr><td className="text-muted">Remaining</td><td className="font-mono">{getRemainingTime(selectedSession)}</td></tr>
                     <tr><td className="text-muted">⚠️ Violations</td><td className={selectedSession.violationCount >= selectedSession.maxViolationsAllowed - 1 ? 'text-red-600 font-bold' : ''}>{selectedSession.violationCount} / {selectedSession.maxViolationsAllowed}</td></tr>
-                    <tr><td className="text-muted">🌐 IP Address</td><td className="font-mono">{selectedSession.ipAddress}</td></tr>
-                    <tr><td className="text-muted">💾 Auto-saves</td><td>{selectedSession.autoSaveCount}</td></tr>
+                    <tr><td className="text-muted">IP Address</td><td className="font-mono">{selectedSession.ipAddress}</td></tr>
+                    <tr><td className="text-muted">Auto-saves</td><td>{selectedSession.autoSaveCount}</td></tr>
                   </tbody>
                 </table>
               </div>

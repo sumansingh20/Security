@@ -96,14 +96,14 @@ export default function StudentDashboard() {
           disabled={isRefreshing}
           style={{ fontSize: '11px', padding: '2px 10px' }}
         >
-          🔄 Refresh
+          Refresh
         </button>
       </div>
 
       {/* Student Info Box */}
       <div className="lms-info-box animate-fadeInDown">
         <div className="lms-info-box-header">
-          <span className="section-icon">👤</span> Student Information
+          Student Information
         </div>
         <div className="lms-info-box-body">
           <div className="lms-info-row">
@@ -139,7 +139,7 @@ export default function StudentDashboard() {
               style={{ marginTop: '8px' }}
               onClick={() => { fetchAvailableExams(); fetchExamResults(); }}
             >
-              🔄 Retry
+              Retry
             </button>
           </div>
         </div>
@@ -208,7 +208,6 @@ export default function StudentDashboard() {
       {/* No Active Exams */}
       {activeExams.length === 0 && !examError && (
         <div className="lms-alert lms-alert-info animate-fadeIn">
-          <span className="section-icon">📋</span>
           <div>
             <div className="lms-alert-title">No Active Examinations</div>
             <div>No examinations scheduled for your batch at this time. Check below for upcoming exams.</div>
@@ -219,7 +218,7 @@ export default function StudentDashboard() {
       {/* Upcoming Exams */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.2s' }}>
         <div className="lms-section-title">
-          <span className="section-icon">📅</span> Upcoming Examinations
+          Upcoming Examinations
         </div>
         <div className="lms-table-container">
           {upcomingExams.length > 0 ? (
@@ -251,7 +250,7 @@ export default function StudentDashboard() {
             </table>
           ) : (
             <div className="lms-table-empty empty-state-animated">
-              <div className="empty-icon">📭</div>
+              <div className="empty-icon"></div>
               <div>No upcoming examinations scheduled.</div>
             </div>
           )}
@@ -261,7 +260,7 @@ export default function StudentDashboard() {
       {/* Recent Results */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.3s' }}>
         <div className="lms-section-title">
-          <span className="section-icon">📊</span> Recent Results
+          Recent Results
           {recentResults.length > 0 && (
             <Link href="/my/results" className="lms-btn lms-btn-sm" style={{ marginLeft: 'auto', fontSize: '11px' }}>View All →</Link>
           )}
@@ -309,7 +308,7 @@ export default function StudentDashboard() {
             </table>
           ) : (
             <div className="lms-table-empty empty-state-animated">
-              <div className="empty-icon">📝</div>
+              <div className="empty-icon"></div>
               <div>No examination results available.</div>
             </div>
           )}
@@ -319,7 +318,7 @@ export default function StudentDashboard() {
       {/* Examination Rules */}
       <div className="lms-info-box guidelines-box animate-fadeIn" style={{ animationDelay: '0.4s' }}>
         <div className="lms-info-box-header">
-          <span className="section-icon">📖</span> Important Instructions
+          Important Instructions
         </div>
         <div className="lms-info-box-body" style={{ fontSize: '12px', lineHeight: '1.8' }}>
           <ul className="guidelines-list">

@@ -101,7 +101,7 @@ export default function TeacherResultsPage() {
                   <td>{r.totalViolations || 0}</td>
                   <td style={{ fontSize: '13px' }}>{new Date(r.submittedAt).toLocaleString()}</td>
                   <td>
-                    <button onClick={() => router.push(`/teacher/exams/${selectedExam}/results`)}
+                    <button onClick={() => router.push(`/teacher/exams/${selectedExam}/submissions/${r._id}`)}
                       className="lms-link" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>
                       View Details
                     </button>

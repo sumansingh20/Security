@@ -50,15 +50,12 @@ export default function HomePage() {
         <p className="home-subtitle">Secure Proctored Examination Portal</p>
         <div className="home-features">
           <div className="home-feature animate-fadeInUp">
-            <span className="home-feature-icon">🔒</span>
             <span>Secure Browser</span>
           </div>
           <div className="home-feature animate-fadeInUp">
-            <span className="home-feature-icon">📹</span>
             <span>Live Proctoring</span>
           </div>
           <div className="home-feature animate-fadeInUp">
-            <span className="home-feature-icon">⚡</span>
             <span>Real-time Monitoring</span>
           </div>
         </div>

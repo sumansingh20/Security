@@ -93,7 +93,6 @@ export default function ResultsPage() {
       {statistics && (
         <div className="lms-stats-row monitor-stats">
           <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.05s' }}>
-            <div className="lms-stat-icon">📊</div>
             <div className="lms-stat-value">{statistics.total}</div>
             <div className="lms-stat-label">Total Exams</div>
           </div>
@@ -108,17 +107,14 @@ export default function ResultsPage() {
             <div className="lms-stat-label">Failed</div>
           </div>
           <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-            <div className="lms-stat-icon">📈</div>
             <div className="lms-stat-value">{statistics.avgPercentage}%</div>
             <div className="lms-stat-label">Average Score</div>
           </div>
           <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-            <div className="lms-stat-icon">🏆</div>
             <div className="lms-stat-value">{statistics.bestPercentage}%</div>
             <div className="lms-stat-label">Best Score</div>
           </div>
           <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
-            <div className="lms-stat-icon">🎯</div>
             <div className="lms-stat-value">{statistics.passRate}%</div>
             <div className="lms-stat-label">Pass Rate</div>
           </div>
@@ -154,7 +150,7 @@ export default function ResultsPage() {
       {/* Results */}
       {results.length === 0 ? (
         <div className="lms-section" style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}></div>
           <h3>No Results Yet</h3>
           <p style={{ color: 'var(--text-muted)', margin: '12px 0 20px' }}>
             You haven&apos;t completed any examinations yet.
@@ -163,7 +159,7 @@ export default function ResultsPage() {
         </div>
       ) : filteredResults.length === 0 ? (
         <div className="lms-section" style={{ textAlign: 'center', padding: '40px 20px' }}>
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</div>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}></div>
           <h3>No Matching Results</h3>
           <p style={{ color: 'var(--text-muted)', margin: '8px 0' }}>Try adjusting your search or filter.</p>
         </div>

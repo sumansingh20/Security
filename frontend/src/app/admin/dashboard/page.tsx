@@ -115,7 +115,7 @@ export default function AdminDashboard() {
           <div className="lms-alert-title">Error Loading Dashboard</div>
           <div style={{ marginBottom: '10px' }}>{error}</div>
           <button className="lms-btn lms-btn-primary lms-btn-sm" onClick={() => fetchDashboard(false)}>
-            🔄 Retry
+            Retry
           </button>
         </div>
       </LMSLayout>
@@ -134,24 +134,21 @@ export default function AdminDashboard() {
           {!isRefreshing && lastRefresh && <span>Last updated: {format(lastRefresh, 'HH:mm:ss')}</span>}
         </div>
         <button className="lms-btn lms-btn-sm" onClick={() => fetchDashboard(true)} disabled={isRefreshing} style={{ fontSize: '11px', padding: '2px 10px' }}>
-          🔄 Refresh
+          Refresh
         </button>
       </div>
 
       {/* Stats */}
       <div className="lms-stats-row monitor-stats">
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.05s' }}>
-          <div className="lms-stat-icon">👥</div>
           <div className="lms-stat-value">{stats?.totalStudents || 0}</div>
           <div className="lms-stat-label">Students</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-          <div className="lms-stat-icon">👨‍🏫</div>
           <div className="lms-stat-value">{stats?.totalTeachers || 0}</div>
           <div className="lms-stat-label">Teachers</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.15s' }}>
-          <div className="lms-stat-icon">📝</div>
           <div className="lms-stat-value">{stats?.totalExams || 0}</div>
           <div className="lms-stat-label">Total Exams</div>
         </div>
@@ -161,12 +158,10 @@ export default function AdminDashboard() {
           <div className="lms-stat-label">Active Now</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-          <div className="lms-stat-icon">📊</div>
           <div className="lms-stat-value">{stats?.totalSubmissions || 0}</div>
           <div className="lms-stat-label">Submissions</div>
         </div>
         <div className="lms-stat stat-card-monitor stat-violation animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
-          <div className="lms-stat-icon">⚠️</div>
           <div className="lms-stat-value" style={{ color: (stats?.recentViolations || 0) > 0 ? 'var(--error)' : undefined }}>
             {stats?.recentViolations || 0}
           </div>
@@ -183,7 +178,7 @@ export default function AdminDashboard() {
             <div>{stats?.activeExams} examination(s) currently active.</div>
           </div>
           <Link href="/admin/monitor" className="lms-btn lms-btn-primary lms-btn-sm" style={{ marginLeft: 'auto' }}>
-            📡 Monitor
+            Monitor
           </Link>
         </div>
       )}
@@ -191,7 +186,7 @@ export default function AdminDashboard() {
       {/* System Status */}
       <div className="lms-info-box animate-fadeIn" style={{ animationDelay: '0.15s' }}>
         <div className="lms-info-box-header">
-          <span className="section-icon">🖥️</span> System Status
+          System Status
         </div>
         <div className="lms-info-box-body">
           <div className="lms-info-row">
@@ -215,21 +210,21 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-        <div className="lms-section-title"><span className="section-icon">⚡</span> Quick Actions</div>
+        <div className="lms-section-title">Quick Actions</div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <Link href="/admin/exams/create" className="lms-btn lms-btn-primary">➕ Create Exam</Link>
-          <Link href="/admin/users/create" className="lms-btn">👤 Add User</Link>
-          <Link href="/admin/monitor" className="lms-btn">📡 Live Monitor</Link>
-          <Link href="/admin/logs" className="lms-btn">📋 Audit Logs</Link>
-          <Link href="/admin/reports" className="lms-btn">📊 Reports</Link>
-          <Link href="/admin/settings" className="lms-btn">⚙️ Settings</Link>
+          <Link href="/admin/exams/create" className="lms-btn lms-btn-primary">+ Create Exam</Link>
+          <Link href="/admin/users/create" className="lms-btn">Add User</Link>
+          <Link href="/admin/monitor" className="lms-btn">Live Monitor</Link>
+          <Link href="/admin/logs" className="lms-btn">Audit Logs</Link>
+          <Link href="/admin/reports" className="lms-btn">Reports</Link>
+          <Link href="/admin/settings" className="lms-btn">Settings</Link>
         </div>
       </div>
 
       {/* Recent Examinations */}
       <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.3s' }}>
         <div className="lms-section-title">
-          <span className="section-icon">📋</span> Recent Examinations
+          Recent Examinations
           <Link href="/admin/exams" className="lms-btn lms-btn-sm" style={{ marginLeft: 'auto', fontSize: '11px' }}>View All →</Link>
         </div>
         <div className="lms-table-container">
@@ -262,7 +257,6 @@ export default function AdminDashboard() {
             </table>
           ) : (
             <div className="lms-table-empty empty-state-animated">
-              <div className="empty-icon">📝</div>
               <div>No examinations found. Create your first exam.</div>
             </div>
           )}
@@ -273,7 +267,7 @@ export default function AdminDashboard() {
       {recentSubmissions.length > 0 && (
         <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.35s' }}>
           <div className="lms-section-title">
-            <span className="section-icon">📊</span> Recent Submissions
+            Recent Submissions
             <Link href="/admin/results" className="lms-btn lms-btn-sm" style={{ marginLeft: 'auto', fontSize: '11px' }}>View All →</Link>
           </div>
           <div className="lms-table-container">
@@ -309,7 +303,7 @@ export default function AdminDashboard() {
       {/* System Notices */}
       <div className="lms-info-box guidelines-box animate-fadeIn" style={{ animationDelay: '0.4s' }}>
         <div className="lms-info-box-header">
-          <span className="section-icon">📢</span> System Notices
+          System Notices
         </div>
         <div className="lms-info-box-body" style={{ fontSize: '12px' }}>
           <ul className="guidelines-list">

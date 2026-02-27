@@ -131,7 +131,10 @@ export default function TeacherCreateExamPage() {
         duration: settings.duration,
         startTime: new Date(settings.startTime).toISOString(),
         endTime: new Date(settings.endTime).toISOString(),
+        totalMarks: settings.totalMarks,
         passingMarks: settings.passingMarks,
+        negativeMarking: settings.negativeMarking,
+        negativeMarkValue: settings.negativeMarkValue,
         randomizeQuestions: settings.shuffleQuestions,
         randomizeOptions: settings.shuffleOptions,
         calculatorType: settings.calculatorType,
@@ -576,7 +579,7 @@ export default function TeacherCreateExamPage() {
             onClick={() => handleSubmit('published')}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating...' : 'Create &amp; Add Questions'}
+            {isSubmitting ? 'Creating...' : 'Create & Add Questions'}
           </button>
         </div>
       </form>

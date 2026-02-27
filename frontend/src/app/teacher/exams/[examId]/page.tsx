@@ -389,7 +389,14 @@ export default function TeacherExamDetailPage() {
                   <tr key={q._id}>
                     <td>{idx + 1}</td>
                     <td className="max-w-md truncate">{q.questionText.slice(0, 100)}...</td>
-                    <td>{q.questionType}</td>
+                    <td>{
+                      {
+                        'mcq-single': 'MCQ', 'mcq-multiple': 'MSQ', 'true-false': 'True/False',
+                        'fill-blank': 'Fill Blank', 'numerical': 'Numerical', 'short-answer': 'Short Answer',
+                        'long-answer': 'Long Answer', 'matching': 'Matching', 'ordering': 'Ordering',
+                        'image-based': 'Image', 'code': 'Code',
+                      }[q.questionType] || q.questionType
+                    }</td>
                     <td>{q.marks}</td>
                   </tr>
                 ))}

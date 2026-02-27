@@ -12,7 +12,8 @@ interface QuestionDetail {
   questionType: string;
   marks: number;
   difficulty?: string;
-  options?: { text: string; isCorrect: boolean }[];
+  options?: { _id?: string; text: string; isCorrect: boolean }[];
+  correctOptions?: string[];
   explanation?: string;
   correctAnswer?: string | number;
   isActive?: boolean;
@@ -51,11 +52,15 @@ export default function ExamQuestionDetailPage() {
   const typeLabels: Record<string, string> = {
     'mcq-single': 'Multiple Choice (Single)',
     'mcq-multiple': 'Multiple Choice (Multiple)',
-    MCQ: 'Multiple Choice (Single)',
-    MSQ: 'Multiple Choice (Multiple)',
     'true-false': 'True/False',
-    numerical: 'Numerical',
-    descriptive: 'Descriptive',
+    'numerical': 'Numerical',
+    'fill-blank': 'Fill in the Blank',
+    'short-answer': 'Short Answer',
+    'long-answer': 'Descriptive / Essay',
+    'matching': 'Matching',
+    'ordering': 'Ordering',
+    'code': 'Code',
+    'image-based': 'Image Based',
   };
 
   return (
@@ -107,16 +112,22 @@ export default function ExamQuestionDetailPage() {
             <div>
               <span className="text-gray-500 text-sm">Options</span>
               <div className="mt-2 space-y-2">
-                {question.options.map((opt, i) => (
-                  <div
-                    key={i}
-                    className={`p-3 rounded border ${opt.isCorrect ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <span className="font-medium mr-2">{String.fromCharCode(65 + i)}.</span>
-                    {opt.text}
-                    {opt.isCorrect && <span className="ml-2 text-green-600 text-sm font-medium">✓ Correct</span>}
-                  </div>
-                ))}
+                {question.options.map((opt, i) => {
+                  const isCorrect = opt.isCorrect ||
+                    (question.correctOptions && opt._id
+                      ? question.correctOptions.includes(opt._id)
+                      : false);
+                  return (
+                    <div
+                      key={i}
+                      className={`p-3 rounded border ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200'}`}
+                    >
+                      <span className="font-medium mr-2">{String.fromCharCode(65 + i)}.</span>
+                      {opt.text}
+                      {isCorrect && <span className="ml-2 text-green-600 text-sm font-medium">Correct</span>}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

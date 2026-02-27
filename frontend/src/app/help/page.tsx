@@ -21,7 +21,7 @@ export default function HelpPage() {
             <h2 className="help-section-title">Quick Start Guide</h2>
             <div className="help-cards">
               <div className="help-card">
-                <div className="help-card-icon">👨‍🎓</div>
+                <div className="help-card-icon"></div>
                 <h3>Students</h3>
                 <ol className="help-steps">
                   <li>Login with your Student ID and Date of Birth</li>
@@ -32,7 +32,7 @@ export default function HelpPage() {
                 </ol>
               </div>
               <div className="help-card">
-                <div className="help-card-icon">👨‍🏫</div>
+                <div className="help-card-icon"></div>
                 <h3>Teachers</h3>
                 <ol className="help-steps">
                   <li>Login with your email and password</li>
@@ -50,35 +50,35 @@ export default function HelpPage() {
             <h2 className="help-section-title">Exam Rules &amp; Instructions</h2>
             <div className="help-rules">
               <div className="help-rule">
-                <span className="help-rule-icon">🔒</span>
+                <span className="help-rule-icon"></span>
                 <div>
                   <strong>Secure Browser</strong>
                   <p>Do not switch tabs, open new windows, or use keyboard shortcuts during the exam. All actions are monitored.</p>
                 </div>
               </div>
               <div className="help-rule">
-                <span className="help-rule-icon">⏱️</span>
+                <span className="help-rule-icon"></span>
                 <div>
                   <strong>Time Limit</strong>
                   <p>Each exam has a strict time limit. Your exam will be auto-submitted when the timer expires.</p>
                 </div>
               </div>
               <div className="help-rule">
-                <span className="help-rule-icon">⚠️</span>
+                <span className="help-rule-icon"></span>
                 <div>
                   <strong>Violations</strong>
                   <p>Tab switching, copy-paste, right-click, and other suspicious activities are flagged as violations. Too many violations may lead to auto-termination.</p>
                 </div>
               </div>
               <div className="help-rule">
-                <span className="help-rule-icon">📋</span>
+                <span className="help-rule-icon"></span>
                 <div>
                   <strong>Question Navigation</strong>
                   <p>Use the question palette to navigate between questions. You can mark questions for review and return to them later.</p>
                 </div>
               </div>
               <div className="help-rule">
-                <span className="help-rule-icon">💾</span>
+                <span className="help-rule-icon"></span>
                 <div>
                   <strong>Auto-Save</strong>
                   <p>Your answers are automatically saved. If you lose connection, you can resume from where you left off.</p>
@@ -126,14 +126,14 @@ export default function HelpPage() {
             <h2 className="help-section-title">Contact Support</h2>
             <div className="help-contact">
               <div className="help-contact-item">
-                <span className="help-contact-icon">📧</span>
+                <span className="help-contact-icon"></span>
                 <div>
                   <strong>Email</strong>
                   <p>support@proctoredexam.com</p>
                 </div>
               </div>
               <div className="help-contact-item">
-                <span className="help-contact-icon">📞</span>
+                <span className="help-contact-icon"></span>
                 <div>
                   <strong>Phone</strong>
                   <p>+91-XXX-XXXXXXX (During exam hours)</p>

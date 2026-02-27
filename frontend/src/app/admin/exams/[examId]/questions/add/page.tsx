@@ -133,19 +133,28 @@ export default function AddQuestionPage() {
       const questionTypeMap: Record<string, string> = {
         'MCQ': 'mcq-single',
         'MSQ': 'mcq-multiple',
-        'numerical': 'mcq-single', // Will handle differently
-        'descriptive': 'mcq-single', // Will handle differently
+        'numerical': 'numerical',
+        'descriptive': 'long-answer',
       };
-      
-      const payload = {
+
+      const payload: Record<string, any> = {
         questionText: form.questionText,
         questionType: questionTypeMap[form.questionType] || 'mcq-single',
         marks: form.marks,
         explanation: form.explanation,
         difficulty: form.difficulty,
-        options: filledOptions.map(o => ({ text: o.text })),
-        correctOptions: correctOptionIndices,
       };
+
+      // Only send options/correctOptions for MCQ types
+      if (form.questionType === 'MCQ' || form.questionType === 'MSQ') {
+        payload.options = filledOptions.map(o => ({ text: o.text }));
+        payload.correctOptions = correctOptionIndices;
+      }
+
+      // Send correctAnswer for numerical type
+      if (form.questionType === 'numerical') {
+        payload.correctAnswer = parseFloat(form.correctAnswer) || 0;
+      }
 
       await api.post(`/admin/exams/${examId}/questions`, payload);
       toast.success('Question added successfully');

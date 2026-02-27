@@ -62,11 +62,14 @@ const setCorsHeaders = (req, res) => {
     // In development, allow any origin for easier testing
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
-    // For same-origin requests or curl - use first allowed origin
-    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0] || 'https://proctorexam.vercel.app');
+    // Same-origin requests (no Origin header) or server-to-server / curl
+    // Use FRONTEND_URL if available, otherwise first allowed origin
+    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || ALLOWED_ORIGINS[0] || 'https://proctorexam.vercel.app');
   } else {
-    // Unknown origin — still set it to avoid browser CORS block
-    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0] || 'https://proctorexam.vercel.app');
+    // Unknown origin in production — reject by not setting matching origin
+    // Browser will block the request (correct security behavior)
+    // But still set something so non-credentialed requests get a clear error
+    res.setHeader('Access-Control-Allow-Origin', 'null');
   }
   
   // CRITICAL: Must be true for cookies to be sent/received

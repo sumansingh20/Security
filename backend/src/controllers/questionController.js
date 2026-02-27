@@ -49,6 +49,12 @@ export const createQuestion = async (req, res, next) => {
           // Get from isCorrect flags
           correctOptionIds = processedOptions.filter(opt => opt.isCorrect).map(opt => opt._id);
         }
+
+        // Sync isCorrect flags on options based on correctOptionIds
+        const correctIdSet = new Set(correctOptionIds.map(id => id.toString()));
+        processedOptions.forEach(opt => {
+          opt.isCorrect = correctIdSet.has(opt._id.toString());
+        });
       }
     }
 

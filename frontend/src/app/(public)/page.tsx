@@ -79,11 +79,11 @@ export default function HomePage() {
             </div>
             <div className="p-4">
               <ul className="text-sm space-y-2 text-gray-700">
-                <li>&#x1F512; Secure browser lockdown</li>
-                <li>&#x1F4F9; Live proctoring &amp; monitoring</li>
-                <li>&#x26A0;&#xFE0F; Violation detection system</li>
-                <li>&#x1F510; Anti-cheating measures</li>
-                <li>&#x1F4CA; Audit trail &amp; logging</li>
+                <li>Secure browser lockdown</li>
+                <li>Live proctoring &amp; monitoring</li>
+                <li>Violation detection system</li>
+                <li>Anti-cheating measures</li>
+                <li>Audit trail &amp; logging</li>
               </ul>
             </div>
           </div>
