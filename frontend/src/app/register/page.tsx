@@ -85,148 +85,167 @@ export default function RegisterPage() {
   };
 
   if (!mounted || isLoading) {
-    return <div className="page-loading">Loading...</div>;
+    return (
+      <div className="auth-status-page">
+        <div className="spinner" />
+        <p className="auth-status-desc">Loading...</p>
+      </div>
+    );
   }
 
   if (user) {
-    return <div className="page-loading">Redirecting...</div>;
+    return (
+      <div className="auth-status-page">
+        <p className="auth-status-desc">Redirecting...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="public-page">
-      <header className="public-header">
-        <div className="public-header-inner">
-          <Link href="/" className="public-logo">
-            <span className="public-logo-icon">PE</span>
-            <span className="public-logo-text">ProctoredExam</span>
+    <div className="login-page">
+      <header className="login-header">
+        <div className="login-header-inner">
+          <Link href="/" className="login-header-home">
+            <div className="login-logo">
+              <span className="login-logo-text">PE</span>
+            </div>
+            <div className="login-institute">
+              <div className="login-institute-name">ProctoredExam</div>
+              <div className="login-institute-sub">Create Account</div>
+            </div>
           </Link>
-          <nav className="public-nav">
-            <Link href="/">Home</Link>
-            <Link href="/login" className="public-nav-login">Log in</Link>
-          </nav>
         </div>
       </header>
 
-      <div className="public-breadcrumb">
-        <Link href="/">Home</Link> &gt; Create new account
-      </div>
+      <main className="login-main">
+        <div className="login-container" style={{ maxWidth: '500px' }}>
+          <div className="login-box">
+            <div className="login-box-header">
+              <div className="login-box-title">Create New Account</div>
+              <div className="login-box-subtitle">Fill in your details to register</div>
+            </div>
 
-      <main className="public-main">
-        <div className="login-wrapper">
-          <div className="login-card">
-            <h1>Create new account</h1>
-            
-            {error && <div className="login-error">{error}</div>}
+            <div className="login-box-body">
+              {error && (
+                <div className="login-error">
+                  <strong>Error:</strong> {error}
+                </div>
+              )}
 
-            <form onSubmit={handleSubmit} className="login-form">
-              <div className="login-field">
-                <label htmlFor="email">Email address</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <form onSubmit={handleSubmit}>
                 <div className="login-field">
-                  <label htmlFor="firstName">First name</label>
+                  <label htmlFor="email">Email Address</label>
                   <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    value={formData.firstName}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
                     onChange={handleChange}
+                    placeholder="Enter your email"
                     required
+                    autoComplete="email"
                   />
                 </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="login-field">
+                    <label htmlFor="firstName">First Name</label>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="First name"
+                      required
+                    />
+                  </div>
+                  <div className="login-field">
+                    <label htmlFor="lastName">Last Name</label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="Last name"
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="login-field">
-                  <label htmlFor="lastName">Last name</label>
+                  <label htmlFor="studentId">Student ID (optional)</label>
                   <input
-                    id="lastName"
-                    name="lastName"
+                    id="studentId"
+                    name="studentId"
                     type="text"
-                    value={formData.lastName}
+                    value={formData.studentId}
                     onChange={handleChange}
-                    required
+                    placeholder="e.g., 21BCS001"
                   />
                 </div>
-              </div>
 
-              <div className="login-field">
-                <label htmlFor="studentId">Student ID (optional)</label>
-                <input
-                  id="studentId"
-                  name="studentId"
-                  type="text"
-                  value={formData.studentId}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="login-field">
-                <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-                <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                  Password must contain:
-                  <ul style={{ paddingLeft: '16px', margin: '4px 0 0' }}>
-                    {passwordRequirements.map((req, index) => (
-                      <li key={index} style={{ color: req.test(formData.password) ? '#5cb85c' : '#666' }}>
-                        {req.test(formData.password) ? '[ok]' : '[ ]'} {req.text}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="login-field">
+                  <label htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Create a password"
+                    required
+                    autoComplete="new-password"
+                  />
+                  <div className="login-field-hint" style={{ marginTop: '8px' }}>
+                    <ul style={{ paddingLeft: '16px', margin: '4px 0 0', listStyle: 'none' }}>
+                      {passwordRequirements.map((req, index) => (
+                        <li key={index} style={{ color: req.test(formData.password) ? '#4ade80' : 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>
+                          {req.test(formData.password) ? '\u2713' : '\u2022'} {req.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
+
+                <div className="login-field">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Re-enter your password"
+                    required
+                    autoComplete="new-password"
+                  />
+                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <div className="login-field-hint" style={{ color: '#fca5a5', marginTop: '4px' }}>
+                      Passwords do not match
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" className="login-submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating account...' : 'Create Account'}
+                </button>
+              </form>
+
+              <div className="login-notice" style={{ marginTop: '20px', textAlign: 'center' }}>
+                Already have an account?{' '}
+                <Link href="/login" style={{ color: '#60a5fa', fontWeight: 600 }}>
+                  Log in here
+                </Link>
               </div>
-
-              <div className="login-field">
-                <label htmlFor="confirmPassword">Confirm password</label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
-                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p style={{ color: '#a94442', fontSize: '12px', marginTop: '4px' }}>
-                    Passwords do not match
-                  </p>
-                )}
-              </div>
-
-              <button type="submit" className="login-submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating account...' : 'Create my new account'}
-              </button>
-            </form>
-
-            <div className="login-links">
-              <Link href="/login">Already have an account? Log in</Link>
             </div>
           </div>
         </div>
       </main>
 
-      <footer className="public-footer">
-        <div className="public-footer-content">
-          <div className="public-footer-info">
-            <p>ProctoredExam © 2024</p>
-          </div>
-          <div className="public-footer-links">
-            <span className="text-gray-400 text-sm">ProctoredExam - Secure Exam Portal</span>
-          </div>
-        </div>
+      <footer className="login-footer">
+        <p>&copy; 2026 ProctoredExam. All rights reserved.</p>
       </footer>
     </div>
   );

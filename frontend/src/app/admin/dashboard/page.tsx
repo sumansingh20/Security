@@ -153,7 +153,7 @@ export default function AdminDashboard() {
           <div className="lms-stat-label">Total Exams</div>
         </div>
         <div className="lms-stat stat-card-monitor stat-active animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-          <div className="lms-stat-icon pulse-icon">🟢</div>
+          <div className="lms-stat-icon pulse-icon"><span className="live-dot"></span></div>
           <div className="lms-stat-value">{stats?.activeExams || 0}</div>
           <div className="lms-stat-label">Active Now</div>
         </div>
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
         <div className="lms-alert lms-alert-warning live-exam-alert animate-pulse-border">
           <div className="live-indicator"></div>
           <div>
-            <div className="lms-alert-title">🔴 LIVE EXAMINATIONS IN PROGRESS</div>
+            <div className="lms-alert-title">LIVE EXAMINATIONS IN PROGRESS</div>
             <div>{stats?.activeExams} examination(s) currently active.</div>
           </div>
           <Link href="/admin/monitor" className="lms-btn lms-btn-primary lms-btn-sm" style={{ marginLeft: 'auto' }}>
@@ -213,11 +213,50 @@ export default function AdminDashboard() {
         <div className="lms-section-title">Quick Actions</div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <Link href="/admin/exams/create" className="lms-btn lms-btn-primary">+ Create Exam</Link>
-          <Link href="/admin/users/create" className="lms-btn">Add User</Link>
+          <Link href="/admin/users/create" className="lms-btn">+ Add User</Link>
           <Link href="/admin/monitor" className="lms-btn">Live Monitor</Link>
           <Link href="/admin/logs" className="lms-btn">Audit Logs</Link>
           <Link href="/admin/reports" className="lms-btn">Reports</Link>
           <Link href="/admin/settings" className="lms-btn">Settings</Link>
+        </div>
+      </div>
+
+      {/* Management Tools */}
+      <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.25s' }}>
+        <div className="lms-section-title">Management Tools</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+          <Link href="/admin/exams" className="lms-tool-card">
+            <div className="lms-tool-title">Exam Manager</div>
+            <div className="lms-tool-desc">Create, edit, and schedule exams. Manage batches and time windows.</div>
+          </Link>
+          <Link href="/admin/users" className="lms-tool-card">
+            <div className="lms-tool-title">User Management</div>
+            <div className="lms-tool-desc">Add students, teachers. Bulk import, role assignment, access control.</div>
+          </Link>
+          <Link href="/admin/questions" className="lms-tool-card">
+            <div className="lms-tool-title">Question Bank</div>
+            <div className="lms-tool-desc">MCQ, multi-select, true/false, essay. Categorize and reuse across exams.</div>
+          </Link>
+          <Link href="/admin/results" className="lms-tool-card">
+            <div className="lms-tool-title">Results &amp; Grading</div>
+            <div className="lms-tool-desc">View submissions, auto-graded scores, manual review, and publish results.</div>
+          </Link>
+          <Link href="/admin/monitor" className="lms-tool-card">
+            <div className="lms-tool-title">Live Monitor</div>
+            <div className="lms-tool-desc">Real-time exam tracking. Webcam feeds, violation alerts, student status.</div>
+          </Link>
+          <Link href="/admin/logs" className="lms-tool-card">
+            <div className="lms-tool-title">Audit Trail</div>
+            <div className="lms-tool-desc">Login logs, session history, answer changes, violation records.</div>
+          </Link>
+          <Link href="/admin/reports" className="lms-tool-card">
+            <div className="lms-tool-title">Reports &amp; Export</div>
+            <div className="lms-tool-desc">Performance analytics, batch reports, export to CSV/PDF.</div>
+          </Link>
+          <Link href="/admin/settings" className="lms-tool-card">
+            <div className="lms-tool-title">System Settings</div>
+            <div className="lms-tool-desc">Proctoring rules, violation thresholds, lockdown config, branding.</div>
+          </Link>
         </div>
       </div>
 

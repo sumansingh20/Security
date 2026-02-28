@@ -22,7 +22,6 @@ interface SidebarLayoutProps {
   breadcrumbs?: { label: string; href?: string }[];
 }
 
-// Icons as simple SVG components
 const Icons = {
   Dashboard: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -161,7 +160,6 @@ const getNavSections = (role: string): NavSection[] => {
     ];
   }
 
-  // Student - Exam Portal Only
   return [
     {
       title: 'Exam Portal',
@@ -183,13 +181,12 @@ const getNavSections = (role: string): NavSection[] => {
 export default function SidebarLayout({ children, pageTitle, breadcrumbs }: SidebarLayoutProps) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed] = useState(false);
 
   const navSections = getNavSections(user?.role || 'student');
 
   const handleLogout = async () => {
     await logout();
-    // Use window.location for full navigation - no redirect loops
     window.location.href = '/login';
   };
 
@@ -202,26 +199,25 @@ export default function SidebarLayout({ children, pageTitle, breadcrumbs }: Side
 
   return (
     <div className="inst-layout">
-      {/* Sidebar */}
       <aside className={`inst-sidebar ${collapsed ? 'collapsed' : ''}`}>
         <div className="inst-sidebar-header">
           <div className="inst-sidebar-logo">
-            <span className="inst-sidebar-logo-icon">PE</span>
-            {!collapsed && <span>ProctoredExam</span>}
+            <span className="inst-logo-icon">PE</span>
+            {!collapsed && <span className="inst-logo-text">ProctoredExam</span>}
           </div>
         </div>
 
-        <nav className="inst-sidebar-nav">
+        <nav className="inst-nav">
           {navSections.map((section, idx) => (
-            <div key={idx}>
-              {!collapsed && <div className="inst-sidebar-section">{section.title}</div>}
+            <div key={idx} className="inst-nav-section">
+              {!collapsed && <div className="inst-nav-title">{section.title}</div>}
               {section.items.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`inst-sidebar-item ${isActive(item.href) ? 'active' : ''}`}
+                  className={`inst-nav-item ${isActive(item.href) ? 'active' : ''}`}
                 >
-                  {item.icon}
+                  <span className="inst-nav-icon">{item.icon}</span>
                   {!collapsed && <span>{item.label}</span>}
                 </Link>
               ))}
@@ -230,16 +226,16 @@ export default function SidebarLayout({ children, pageTitle, breadcrumbs }: Side
         </nav>
 
         <div className="inst-sidebar-footer">
+          <button className="inst-sidebar-logout" onClick={handleLogout}>
+            <span className="inst-nav-icon"><Icons.Logout /></span>
+            {!collapsed && <span>Logout</span>}
+          </button>
           {!collapsed && (
-            <>
-              <div>Version 1.0.0</div>
-              <div>© 2026 ProctoredExam</div>
-            </>
+            <div className="inst-sidebar-version">&copy; 2026 ProctoredExam</div>
           )}
         </div>
       </aside>
 
-      {/* Header */}
       <header className="inst-header">
         <div className="inst-header-left">
           {breadcrumbs && breadcrumbs.length > 0 && (
@@ -265,13 +261,9 @@ export default function SidebarLayout({ children, pageTitle, breadcrumbs }: Side
             </span>
             <span className="inst-header-user-role">{user?.role}</span>
           </div>
-          <button className="inst-header-logout" onClick={handleLogout}>
-            Logout
-          </button>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="inst-main">
         {pageTitle && <h1 className="page-title">{pageTitle}</h1>}
         {children}

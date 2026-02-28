@@ -145,7 +145,7 @@ export default function TeacherDashboard() {
           <div className="lms-stat-label">Total Exams</div>
         </div>
         <div className="lms-stat stat-card-monitor stat-active animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-          <div className="lms-stat-icon pulse-icon">🟢</div>
+          <div className="lms-stat-icon pulse-icon"><span className="live-dot"></span></div>
           <div className="lms-stat-value">{activeExams.length}</div>
           <div className="lms-stat-label">Active Exams</div>
         </div>
@@ -170,7 +170,7 @@ export default function TeacherDashboard() {
         <div className="lms-alert lms-alert-warning live-exam-alert animate-pulse-border">
           <div className="live-indicator"></div>
           <div>
-            <div className="lms-alert-title">🔴 LIVE EXAMINATION IN PROGRESS</div>
+            <div className="lms-alert-title">LIVE EXAMINATION IN PROGRESS</div>
             <div>{activeExams.length} examination(s) currently active. Use Live Monitor for real-time tracking.</div>
           </div>
           <Link href="/teacher/monitor" className="lms-btn lms-btn-primary lms-btn-sm" style={{ marginLeft: 'auto' }}>
@@ -219,7 +219,7 @@ export default function TeacherDashboard() {
       {/* Active Examinations Table */}
       {activeExams.length > 0 && (
         <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.25s' }}>
-          <div className="lms-section-title"><span className="section-icon">🔴</span> Active Examinations</div>
+          <div className="lms-section-title"><span className="live-dot"></span> Active Examinations</div>
           <div className="lms-table-container">
             <table className="lms-table">
               <thead>

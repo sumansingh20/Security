@@ -3,11 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 
-/**
- * TEACHER LAYOUT - CRASH-PROOF
- * NO auto-redirect loops
- * Shows session expired message instead of redirecting
- */
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, checkAuth } = useAuthStore();
   const [authChecked, setAuthChecked] = useState(false);
@@ -27,33 +22,43 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     return () => { cancelled = true; };
   }, []);
 
-  // Show loading only while auth check is in progress
   if (!authChecked) {
     return (
-      <div className="lms-loading-page">
-        <div>Verifying authentication...</div>
+      <div className="auth-status-page">
+        <div className="spinner" />
+        <p className="auth-status-desc">Verifying authentication...</p>
       </div>
     );
   }
 
-  // Session expired - show message, no redirect
   if (!isAuthenticated) {
     return (
-      <div className="lms-loading-page" style={{ flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
-        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>Session Expired</div>
-        <div style={{ color: '#6b7280' }}>Please log in again to access the teacher panel.</div>
-        <a href="/login" style={{ padding: '12px 24px', backgroundColor: '#1e40af', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Login</a>
+      <div className="auth-status-page">
+        <div className="auth-status-icon expired">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h1 className="auth-status-title error">Session Expired</h1>
+        <p className="auth-status-desc">Please log in again to access the teacher panel.</p>
+        <a href="/login" className="auth-status-btn">Login</a>
       </div>
     );
   }
 
-  // Wrong role - students go to their area
   if (user?.role !== 'admin' && user?.role !== 'teacher') {
     return (
-      <div className="lms-loading-page" style={{ flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
-        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>Access Denied</div>
-        <div style={{ color: '#6b7280' }}>You don't have permission to access this area.</div>
-        <a href="/my" style={{ padding: '12px 24px', backgroundColor: '#1e40af', color: 'white', borderRadius: '6px', textDecoration: 'none' }}>Go to Student Portal</a>
+      <div className="auth-status-page">
+        <div className="auth-status-icon denied">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <h1 className="auth-status-title warning">Access Denied</h1>
+        <p className="auth-status-desc">You do not have permission to access this area.</p>
+        <a href="/my" className="auth-status-btn">Go to Student Portal</a>
       </div>
     );
   }

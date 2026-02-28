@@ -124,8 +124,9 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
   // Show loading while checking auth
   if (!mounted || !authChecked) {
     return (
-      <div className="lms-loading-page">
-        <div>Loading...</div>
+      <div className="auth-status-page">
+        <div className="spinner" />
+        <p className="auth-status-desc">Loading...</p>
       </div>
     );
   }
@@ -133,28 +134,17 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
   // Session expired or not authenticated - show message, NO auto-redirect
   if (!isAuthenticated || !user) {
     return (
-      <div className="lms-loading-page" style={{ flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
-        <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>
-          Session Expired
+      <div className="auth-status-page">
+        <div className="auth-status-icon expired">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
         </div>
-        <div style={{ color: '#6b7280' }}>
-          Your session has expired or you are not logged in.
-        </div>
-        <a 
-          href="/login" 
-          style={{ 
-            display: 'inline-block',
-            padding: '12px 24px', 
-            backgroundColor: '#1e40af', 
-            color: 'white', 
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontWeight: '500',
-            marginTop: '8px'
-          }}
-        >
-          Login Again
-        </a>
+        <h1 className="auth-status-title error">Session Expired</h1>
+        <p className="auth-status-desc">Your session has expired or you are not logged in.</p>
+        <a href="/login" className="auth-status-btn">Login Again</a>
       </div>
     );
   }

@@ -48,9 +48,11 @@ export const authSchemas = {
   }),
 
   login: Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
-  }),
+    email: Joi.string().email().optional(),
+    password: Joi.string().optional(),
+    studentId: Joi.string().optional(),
+    dob: Joi.string().optional(),
+  }).or('email', 'studentId'),
 
   refreshToken: Joi.object({
     refreshToken: Joi.string().required(),
