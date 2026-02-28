@@ -599,8 +599,9 @@ export const seedDemo = async (req, res, next) => {
   try {
     const { secretKey } = req.body;
     
-    // Simple security check
-    if (secretKey !== 'SEED_DEMO_2026') {
+    // Simple security check - key must be set via environment variable
+    const expectedKey = process.env.SEED_DEMO_SECRET;
+    if (!expectedKey || secretKey !== expectedKey) {
       throw new AppError('Invalid secret key', 403);
     }
 

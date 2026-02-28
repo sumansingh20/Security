@@ -19,6 +19,15 @@ export default function HomePage() {
   if (!authChecked || isLoading) {
     return (
       <div className="home-page">
+        {/* Floating background shapes */}
+        <div className="home-bg-shapes" aria-hidden="true">
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+        </div>
         <div className="home-loader animate-fadeIn">
           <div className="home-logo-icon animate-pulse">PE</div>
           <p className="home-loader-text">ProctoredExam</p>
@@ -32,11 +41,22 @@ export default function HomePage() {
     const dashboardUrl = user.role === 'admin' ? '/admin/dashboard' : user.role === 'teacher' ? '/teacher' : '/my';
     return (
       <div className="home-page">
-        <div className="home-card animate-scaleIn">
-          <div className="home-logo-icon">PE</div>
+        <div className="home-bg-shapes" aria-hidden="true">
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+          <div className="home-bg-shape" />
+        </div>
+        <div className="home-card">
+          <div className="home-logo-icon animate-glow-pulse home-logo-centered">PE</div>
           <h1 className="home-title">Welcome back, {user.firstName}!</h1>
-          <p className="home-subtitle">You are logged in as <strong>{user.role}</strong></p>
-          <Link href={dashboardUrl} className="home-btn home-btn-primary">Go to Dashboard</Link>
+          <p className="home-subtitle">Logged in as <strong className="home-user-role">{user.role}</strong></p>
+          <Link href={dashboardUrl} className="home-btn home-btn-primary">
+            <span className="home-btn-icon">⚡</span>
+            Go to Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -44,24 +64,81 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <div className="home-hero animate-fadeInUp">
+      {/* Animated floating background shapes */}
+      <div className="home-bg-shapes" aria-hidden="true">
+        <div className="home-bg-shape" />
+        <div className="home-bg-shape" />
+        <div className="home-bg-shape" />
+        <div className="home-bg-shape" />
+        <div className="home-bg-shape" />
+        <div className="home-bg-shape" />
+      </div>
+
+      <div className="home-hero">
+        {/* 3D animated logo */}
         <div className="home-logo-icon home-logo-lg">PE</div>
+
         <h1 className="home-title">ProctoredExam</h1>
-        <p className="home-subtitle">Secure Proctored Examination Portal</p>
+        <p className="home-subtitle">
+          The most secure, AI-powered proctored examination portal
+          <br />
+          <span className="home-subtitle-small">for educational institutions worldwide.</span>
+        </p>
+
+        {/* Feature pills with 3D hover */}
         <div className="home-features">
-          <div className="home-feature animate-fadeInUp">
+          <div className="home-feature">
+            <span className="home-feature-icon">🔒</span>
             <span>Secure Browser</span>
           </div>
-          <div className="home-feature animate-fadeInUp">
+          <div className="home-feature">
+            <span className="home-feature-icon">📹</span>
             <span>Live Proctoring</span>
           </div>
-          <div className="home-feature animate-fadeInUp">
+          <div className="home-feature">
+            <span className="home-feature-icon">📊</span>
             <span>Real-time Monitoring</span>
           </div>
+          <div className="home-feature">
+            <span className="home-feature-icon">🛡️</span>
+            <span>Anti-Cheating</span>
+          </div>
+          <div className="home-feature">
+            <span className="home-feature-icon">⚡</span>
+            <span>Instant Results</span>
+          </div>
         </div>
+
+        {/* CTA Buttons */}
         <div className="home-actions">
-          <Link href="/login" className="home-btn home-btn-primary">Login to Continue</Link>
-          <Link href="/help" className="home-btn home-btn-outline">Help & Support</Link>
+          <Link href="/login" className="home-btn home-btn-primary">
+            <span className="home-btn-icon">🚀</span>
+            Login to Continue
+          </Link>
+          <Link href="/help" className="home-btn home-btn-outline">
+            <span className="home-btn-icon">❓</span>
+            Help &amp; Support
+          </Link>
+        </div>
+
+        {/* Stats row */}
+        <div className="home-stats">
+          <div className="home-stat">
+            <div className="home-stat-value">99.9%</div>
+            <div className="home-stat-label">Uptime</div>
+          </div>
+          <div className="home-stat">
+            <div className="home-stat-value">256-bit</div>
+            <div className="home-stat-label">Encryption</div>
+          </div>
+          <div className="home-stat">
+            <div className="home-stat-value">24/7</div>
+            <div className="home-stat-label">Support</div>
+          </div>
+          <div className="home-stat">
+            <div className="home-stat-value">∞</div>
+            <div className="home-stat-label">Exams</div>
+          </div>
         </div>
       </div>
     </div>

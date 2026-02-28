@@ -202,7 +202,7 @@ export default function ExamDetailsPage() {
         <div className="lms-section-title">Exam Instructions</div>
         <div className="lms-info-box-body" style={{ fontSize: '13px', lineHeight: '1.8' }}>
           {exam.instructions ? (
-            <div dangerouslySetInnerHTML={{ __html: exam.instructions }} />
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{exam.instructions}</div>
           ) : exam.description ? (
             <p>{exam.description}</p>
           ) : (

@@ -334,7 +334,7 @@ export default function LoginPage() {
       <style jsx>{`
         .login-tabs {
           display: flex;
-          border-bottom: 2px solid #e2e8f0;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
           margin-bottom: 0;
         }
         .login-tab {
@@ -342,21 +342,21 @@ export default function LoginPage() {
           padding: 12px 16px;
           border: none;
           background: transparent;
-          color: #64748b;
+          color: rgba(255,255,255,0.5);
           font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
-          border-bottom: 3px solid transparent;
-          margin-bottom: -2px;
+          transition: all 0.25s;
+          border-bottom: 2px solid transparent;
+          margin-bottom: -1px;
         }
         .login-tab:hover {
-          color: #3b82f6;
-          background: #f8fafc;
+          color: rgba(255,255,255,0.85);
+          background: rgba(255,255,255,0.05);
         }
         .login-tab.active {
-          color: #1e40af;
-          border-bottom-color: #1e40af;
-          background: #eff6ff;
+          color: #60a5fa;
+          border-bottom-color: #3b82f6;
+          background: rgba(59,130,246,0.1);
         }
       `}</style>
     </div>

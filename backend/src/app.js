@@ -55,8 +55,8 @@ const setCorsHeaders = (req, res) => {
   // CRITICAL: For credentials to work, we MUST set a specific origin, not '*'
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (origin && origin.endsWith('.vercel.app')) {
-    // Allow ALL Vercel preview deployments
+  } else if (origin && origin.endsWith('.vercel.app') && process.env.NODE_ENV !== 'production') {
+    // Allow Vercel preview deployments only in non-production environments
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (origin && process.env.NODE_ENV !== 'production') {
     // In development, allow any origin for easier testing
@@ -201,92 +201,94 @@ const initializeDB = async () => {
 
     await connectDB();
 
-    // AUTO-CREATE USERS (always, not just DEMO_MODE)
-    const users = [
-      {
-        email: 'admin@proctorexam.com',
-        password: 'Admin@123',
-        firstName: 'System',
-        lastName: 'Administrator',
-        role: 'admin',
-        isActive: true,
-        isVerified: true,
-      },
-      {
-        email: 'teacher@proctorexam.com',
-        password: 'Teacher@123',
-        firstName: 'Demo',
-        lastName: 'Teacher',
-        role: 'teacher',
-        isActive: true,
-        isVerified: true,
-      },
-      {
-        email: 'student@proctorexam.com',
-        password: 'Student@123',
-        firstName: 'Test',
-        lastName: 'Student',
-        role: 'student',
-        studentId: 'STU001',
-        dateOfBirth: new Date('2000-01-01'),
-        isActive: true,
-        isVerified: true,
-      },
-      {
-        email: 'demo.student@proctorexam.com',
-        password: 'Demo@123',
-        firstName: 'Demo',
-        lastName: 'Student',
-        role: 'student',
-        studentId: 'STU002',
-        dateOfBirth: new Date('2001-05-15'),
-        isActive: true,
-        isVerified: true,
-      },
-    ];
+    // AUTO-CREATE DEMO USERS only when DEMO_MODE is enabled
+    if (process.env.DEMO_MODE === 'true') {
+      const users = [
+        {
+          email: 'admin@proctorexam.com',
+          password: process.env.DEMO_ADMIN_PASSWORD || 'Admin@123',
+          firstName: 'System',
+          lastName: 'Administrator',
+          role: 'admin',
+          isActive: true,
+          isVerified: true,
+        },
+        {
+          email: 'teacher@proctorexam.com',
+          password: process.env.DEMO_TEACHER_PASSWORD || 'Teacher@123',
+          firstName: 'Demo',
+          lastName: 'Teacher',
+          role: 'teacher',
+          isActive: true,
+          isVerified: true,
+        },
+        {
+          email: 'student@proctorexam.com',
+          password: process.env.DEMO_STUDENT_PASSWORD || 'Student@123',
+          firstName: 'Test',
+          lastName: 'Student',
+          role: 'student',
+          studentId: 'STU001',
+          dateOfBirth: new Date('2000-01-01'),
+          isActive: true,
+          isVerified: true,
+        },
+        {
+          email: 'demo.student@proctorexam.com',
+          password: process.env.DEMO_STUDENT2_PASSWORD || 'Demo@123',
+          firstName: 'Demo',
+          lastName: 'Student',
+          role: 'student',
+          studentId: 'STU002',
+          dateOfBirth: new Date('2001-05-15'),
+          isActive: true,
+          isVerified: true,
+        },
+      ];
 
-    for (const userData of users) {
-      try {
-        // Try to find existing user by email
-        const exists = await User.findOne({ email: userData.email });
-        
-        if (!exists) {
-          // Create new user
-          await User.create(userData);
-          console.log(`[SEED] User created: ${userData.email}`);
-        } else {
-          // ALWAYS update for demo users - fix studentId, DOB, unlock account
-          let needsSave = false;
-          
-          // Unlock account if locked
-          if (exists.loginAttempts > 0 || exists.lockUntil) {
-            exists.loginAttempts = 0;
-            exists.lockUntil = undefined;
-            needsSave = true;
+      for (const userData of users) {
+        try {
+          // Try to find existing user by email
+          const exists = await User.findOne({ email: userData.email });
+
+          if (!exists) {
+            // Create new user
+            await User.create(userData);
+            console.log(`[SEED] User created: ${userData.email}`);
+          } else {
+            // Update for demo users - fix studentId, DOB, unlock account
+            let needsSave = false;
+
+            // Unlock account if locked
+            if (exists.loginAttempts > 0 || exists.lockUntil) {
+              exists.loginAttempts = 0;
+              exists.lockUntil = undefined;
+              needsSave = true;
+            }
+
+            // Ensure active
+            if (!exists.isActive) {
+              exists.isActive = true;
+              needsSave = true;
+            }
+
+            // Update studentId and DOB
+            if (userData.studentId && exists.studentId !== userData.studentId) {
+              exists.studentId = userData.studentId;
+              needsSave = true;
+            }
+            if (userData.dateOfBirth && (!exists.dateOfBirth || exists.dateOfBirth.getTime() !== userData.dateOfBirth.getTime())) {
+              exists.dateOfBirth = userData.dateOfBirth;
+              needsSave = true;
+            }
+            if (needsSave) {
+              await exists.save();
+              console.log(`[SEED] User updated: ${userData.email} - studentId: ${userData.studentId}`);
+            }
           }
-          
-          // Ensure active
-          if (!exists.isActive) {
-            exists.isActive = true;
-            needsSave = true;
-          }
-          
-          // Update studentId and DOB
-          if (userData.studentId && exists.studentId !== userData.studentId) {
-            exists.studentId = userData.studentId;
-            needsSave = true;
-          }
-          if (userData.dateOfBirth && (!exists.dateOfBirth || exists.dateOfBirth.getTime() !== userData.dateOfBirth.getTime())) {
-            exists.dateOfBirth = userData.dateOfBirth;
-            needsSave = true;
-          }
-          if (needsSave) {
-            await exists.save();
-            console.log(`[SEED] User updated: ${userData.email} - studentId: ${userData.studentId}`);
-          }
+        } catch (e) {
+          console.log(`[SEED] User error: ${userData.email} - ${e.message}`);
         }
-      } catch (e) {
-        console.log(`[SEED] User error: ${userData.email} - ${e.message}`);
       }
     }
 

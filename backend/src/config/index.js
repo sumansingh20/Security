@@ -42,15 +42,33 @@ const config = {
 
   /* ---------------- JWT ---------------- */
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+    accessSecret: (() => {
+      const s = process.env.JWT_ACCESS_SECRET;
+      if (!s && process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_ACCESS_SECRET environment variable is required in production');
+      }
+      return s || 'dev-access-secret';
+    })(),
+    refreshSecret: (() => {
+      const s = process.env.JWT_REFRESH_SECRET;
+      if (!s && process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_REFRESH_SECRET environment variable is required in production');
+      }
+      return s || 'dev-refresh-secret';
+    })(),
     accessExpiry: process.env.JWT_ACCESS_EXPIRY || '24h',
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
   },
 
   /* ---------------- Session ---------------- */
   session: {
-    secret: process.env.SESSION_SECRET || 'dev-session-secret',
+    secret: (() => {
+      const s = process.env.SESSION_SECRET;
+      if (!s && process.env.NODE_ENV === 'production') {
+        throw new Error('SESSION_SECRET environment variable is required in production');
+      }
+      return s || 'dev-session-secret';
+    })(),
   },
 
   /* ---------------- CORS ---------------- */
