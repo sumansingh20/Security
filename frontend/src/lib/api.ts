@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -32,14 +32,13 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const config = error.config;
-    // Retry logic: up to 2 retries for 5xx or network errors (not for 4xx)
+    // Retry logic: 1 retry for 5xx or network errors (not for 4xx)
     if (config && !config.__retryCount) config.__retryCount = 0;
     const status = error.response?.status;
     const isRetryable = !status || (status >= 500 && status < 600);
-    if (config && isRetryable && config.__retryCount < 2) {
+    if (config && isRetryable && config.__retryCount < 1) {
       config.__retryCount++;
-      // Exponential backoff: 1s, 2s
-      await new Promise(r => setTimeout(r, config.__retryCount * 1000));
+      await new Promise(r => setTimeout(r, 1000));
       return api(config);
     }
     // On 401, try refreshing session ONCE - but NEVER for auth endpoints

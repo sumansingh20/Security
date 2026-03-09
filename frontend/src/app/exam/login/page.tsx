@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 export default function ExamLoginPage() {
@@ -66,7 +67,6 @@ export default function ExamLoginPage() {
         } else if (data.reason === 'not_enrolled') {
           setError('You are not enrolled in this exam.');
         } else if (data.reason === 'session_exists') {
-          // Resume existing session - store with examId for attempt page
           const resolvedExamId = data.examId || examCode;
           sessionStorage.setItem(`exam_session_${resolvedExamId}`, data.sessionToken);
           router.push(`/exam/${resolvedExamId}/attempt`);
@@ -78,11 +78,9 @@ export default function ExamLoginPage() {
         return;
       }
 
-      // Store session token using the server-returned examId
       const resolvedExamId = data.examId || examCode;
       sessionStorage.setItem(`exam_session_${resolvedExamId}`, data.sessionToken);
 
-      // Show instructions before starting
       setExamDetails({
         examId: data.examId,
         title: data.title || 'Examination',
@@ -105,180 +103,363 @@ export default function ExamLoginPage() {
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '9px 12px',
+    fontSize: '14px',
+    border: '1px solid #ced4da',
+    borderRadius: '4px',
+    backgroundColor: '#ffffff',
+    color: '#212529',
+    boxSizing: 'border-box',
+    outline: 'none',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '6px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#495057',
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = '#1d4f91';
+    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(29,79,145,0.15)';
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.borderColor = '#ced4da';
+    e.currentTarget.style.boxShadow = 'none';
+  };
+
   // Instructions screen
   if (showInstructions && examDetails) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-8">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{examDetails.title}</h1>
-            <div className="flex justify-center space-x-6 text-sm text-gray-600">
-              <span>Duration: <strong>{examDetails.duration} minutes</strong></span>
-              <span>Questions: <strong>{examDetails.totalQuestions}</strong></span>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f8f9fa' }}>
+        <header style={{ backgroundColor: '#1d4f91', color: '#ffffff' }}>
+          <div style={{
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '0 24px',
+            display: 'flex',
+            alignItems: 'center',
+            height: '56px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                backgroundColor: '#ffffff',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '15px',
+                color: '#1d4f91',
+                lineHeight: 1,
+              }}>
+                PE
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '16px' }}>ProctoredExam</span>
             </div>
           </div>
+        </header>
 
-          <div className="border-t border-b py-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Important Instructions</h2>
-            <ul className="space-y-3 text-sm text-gray-700">
-              <li className="flex items-start">
-                <span className="text-red-500 mr-2">●</span>
-                <span>Do NOT switch tabs, minimize the window, or open other applications. Each violation is recorded.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-red-500 mr-2">●</span>
-                <span>Do NOT use keyboard shortcuts (Ctrl+C, Ctrl+V, etc.) or right-click. These are disabled.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-red-500 mr-2">●</span>
-                <span>Your exam will be <strong>auto-submitted</strong> when the timer ends. No extensions.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-red-500 mr-2">●</span>
-                <span>Maximum <strong>5 violations</strong> allowed. After 5, your exam will be terminated.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-500 mr-2">●</span>
-                <span>Answers are auto-saved every time you select/type. No need for manual save.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-500 mr-2">●</span>
-                <span>You can navigate between questions using the sidebar or Next/Previous buttons.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-500 mr-2">●</span>
-                <span>Review all answers before submitting. Once submitted, you cannot make changes.</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-blue-500 mr-2">●</span>
-                <span>This session is bound to your current browser and IP address. Do not attempt to login from another device.</span>
-              </li>
-            </ul>
-          </div>
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            maxWidth: '640px',
+            width: '100%',
+            overflow: 'hidden',
+          }}>
+            {/* Exam Title */}
+            <div style={{ padding: '24px 32px', textAlign: 'center', borderBottom: '1px solid #dee2e6' }}>
+              <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#212529' }}>{examDetails.title}</h1>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '8px', fontSize: '13px', color: '#6c757d' }}>
+                <span>Duration: <strong style={{ color: '#212529' }}>{examDetails.duration} minutes</strong></span>
+                <span>Questions: <strong style={{ color: '#212529' }}>{examDetails.totalQuestions}</strong></span>
+              </div>
+            </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-6">
-            <p className="text-sm text-yellow-800">
-              <strong>Warning:</strong> By clicking "Start Exam", you agree to the exam rules. 
-              Your session will be monitored for academic integrity.
-            </p>
-          </div>
+            {/* Instructions */}
+            <div style={{ padding: '24px 32px' }}>
+              <h2 style={{ margin: '0 0 14px 0', fontSize: '16px', fontWeight: 600, color: '#212529' }}>Important Instructions</h2>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: '13px', color: '#495057', lineHeight: 2 }}>
+                {[
+                  { color: '#dc3545', text: 'Do NOT switch tabs, minimize the window, or open other applications. Each violation is recorded.' },
+                  { color: '#dc3545', text: 'Do NOT use keyboard shortcuts (Ctrl+C, Ctrl+V, etc.) or right-click. These are disabled.' },
+                  { color: '#dc3545', text: 'Your exam will be auto-submitted when the timer ends. No extensions.' },
+                  { color: '#dc3545', text: 'Maximum 5 violations allowed. After 5, your exam will be terminated.' },
+                  { color: '#e67e22', text: 'Answers are auto-saved every time you select/type. No need for manual save.' },
+                  { color: '#e67e22', text: 'You can navigate between questions using the sidebar or Next/Previous buttons.' },
+                  { color: '#e67e22', text: 'Review all answers before submitting. Once submitted, you cannot make changes.' },
+                  { color: '#1d4f91', text: 'This session is bound to your current browser and IP address. Do not attempt to login from another device.' },
+                ].map((item, i) => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <span style={{ color: item.color, fontSize: '8px', marginTop: '6px', flexShrink: 0 }}>&#9679;</span>
+                    <span>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div className="flex space-x-4">
-            <button
-              onClick={() => {
-                setShowInstructions(false);
-                const resolvedExamId = examDetails?.examId || examCode;
-                sessionStorage.removeItem(`exam_session_${resolvedExamId}`);
-                setExamDetails(null);
-              }}
-              className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={startExam}
-              className="flex-1 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 font-medium"
-            >
-              Start Exam
-            </button>
+            {/* Warning */}
+            <div style={{ margin: '0 32px 24px 32px', padding: '12px 16px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
+              <p style={{ margin: 0, fontSize: '13px', color: '#664d03' }}>
+                <strong>Warning:</strong> By clicking &quot;Start Exam&quot;, you agree to the exam rules.
+                Your session will be monitored for academic integrity.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: '0 32px 32px 32px', display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowInstructions(false);
+                  const resolvedExamId = examDetails?.examId || examCode;
+                  sessionStorage.removeItem(`exam_session_${resolvedExamId}`);
+                  setExamDetails(null);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: '#495057',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startExam}
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  backgroundColor: '#1d4f91',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Start Exam
+              </button>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   // Login form
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-900 to-blue-800 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Exam Portal</h1>
-          <p className="text-sm text-gray-500 mt-1">Secure examination system</p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f8f9fa' }}>
+
+      {/* Top Bar */}
+      <header style={{ backgroundColor: '#1d4f91', color: '#ffffff' }}>
+        <div style={{
+          maxWidth: '1100px',
+          margin: '0 auto',
+          padding: '0 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: '56px',
+        }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: '#ffffff' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              backgroundColor: '#ffffff',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: '15px',
+              color: '#1d4f91',
+              lineHeight: 1,
+              flexShrink: 0,
+            }}>
+              PE
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '16px', lineHeight: 1.2 }}>ProctoredExam</div>
+              <div style={{ fontSize: '11px', opacity: 0.75, lineHeight: 1.2 }}>Direct Exam Login</div>
+            </div>
+          </Link>
+          <Link href="/login" style={{ color: '#bee3f8', fontSize: '13px', textDecoration: 'none' }}>
+            Staff Sign In
+          </Link>
         </div>
+      </header>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 text-sm">
-            {error}
-          </div>
-        )}
+      {/* Main */}
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
+        <div style={{ width: '100%', maxWidth: '440px' }}>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Exam Code
-            </label>
-            <input
-              type="text"
-              value={examCode}
-              onChange={(e) => setExamCode(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter exam code"
-              required
-            />
-          </div>
+          <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            overflow: 'hidden',
+          }}>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Student ID / Email
-            </label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your student ID or email"
-              required
-            />
-          </div>
+            {/* Card Header */}
+            <div style={{ padding: '24px 32px 0 32px', textAlign: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#212529' }}>
+                Exam Portal Login
+              </h2>
+              <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
+                Enter your credentials to access the examination
+              </p>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password (Date of Birth)
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="DD-MM-YYYY or DDMMYYYY"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Enter your date of birth as password (e.g., 15-08-2000)
-            </p>
-          </div>
+            {/* Form */}
+            <div style={{ padding: '24px 32px 32px 32px' }}>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Verifying...
-              </span>
-            ) : (
-              'Login to Exam'
-            )}
-          </button>
-        </form>
+              {error && (
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '10px 14px',
+                  backgroundColor: '#f8d7da',
+                  border: '1px solid #f5c6cb',
+                  borderRadius: '4px',
+                  color: '#721c24',
+                  fontSize: '13px',
+                }}>
+                  {error}
+                </div>
+              )}
 
-        <div className="mt-6 pt-6 border-t">
-          <div className="text-center text-xs text-gray-500 space-y-1">
-            <p>This system uses device fingerprinting and IP tracking.</p>
-            <p>All activities are monitored and logged.</p>
+              <form onSubmit={handleLogin}>
+                <div style={{ marginBottom: '16px' }}>
+                  <label htmlFor="examCode" style={labelStyle}>Exam Code</label>
+                  <input
+                    id="examCode"
+                    type="text"
+                    value={examCode}
+                    onChange={(e) => setExamCode(e.target.value)}
+                    placeholder="Enter exam code"
+                    required
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <label htmlFor="userId" style={labelStyle}>Student ID / Email</label>
+                  <input
+                    id="userId"
+                    type="text"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    placeholder="Enter your student ID or email"
+                    required
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label htmlFor="password" style={labelStyle}>Password (Date of Birth)</label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="DD-MM-YYYY or DDMMYYYY"
+                    required
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#868e96' }}>
+                    Enter your date of birth as password (e.g., 15-08-2000)
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: '100%',
+                    padding: '10px 0',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    backgroundColor: loading ? '#6c8ebf' : '#1d4f91',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {loading ? 'Verifying...' : 'Login to Exam'}
+                </button>
+              </form>
+
+              {/* Security notice */}
+              <div style={{
+                marginTop: '20px',
+                padding: '10px 14px',
+                backgroundColor: '#e8f4fd',
+                border: '1px solid #b8daff',
+                borderRadius: '4px',
+                fontSize: '12px',
+                color: '#004085',
+                lineHeight: 1.5,
+              }}>
+                This system uses device fingerprinting and IP tracking.
+                All activities are monitored and logged.
+              </div>
+            </div>
+
+            {/* Footer links */}
+            <div style={{
+              padding: '14px 32px',
+              backgroundColor: '#f8f9fa',
+              borderTop: '1px solid #e9ecef',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              fontSize: '13px',
+            }}>
+              <Link href="/login" style={{ color: '#1d4f91', textDecoration: 'none' }}>Staff Sign In</Link>
+              <span style={{ color: '#ced4da' }}>|</span>
+              <Link href="/help" style={{ color: '#1d4f91', textDecoration: 'none' }}>Help</Link>
+              <span style={{ color: '#ced4da' }}>|</span>
+              <Link href="/" style={{ color: '#1d4f91', textDecoration: 'none' }}>Home</Link>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={{
+        backgroundColor: '#ffffff',
+        borderTop: '1px solid #dee2e6',
+        padding: '16px',
+        textAlign: 'center',
+      }}>
+        <p style={{ margin: 0, fontSize: '12px', color: '#868e96' }}>
+          &copy; 2026 ProctoredExam &middot; Secure Online Examination System
+        </p>
+      </footer>
     </div>
   );
 }
