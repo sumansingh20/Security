@@ -1,0 +1,4 @@
+# Axe Accessibility Linter configuration
+# Disable inline style warnings - inline styles are standard practice in React/Next.js
+disabled-rules:
+  - inline-style-property

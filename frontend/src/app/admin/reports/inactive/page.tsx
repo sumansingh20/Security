@@ -56,6 +56,7 @@ export default function InactiveUsersReportPage() {
         <div className="flex items-center gap-3 mb-6">
           <label className="text-sm text-gray-600">Inactive for more than:</label>
           <select
+            title="Inactive days threshold"
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
             className="border rounded px-3 py-1 text-sm"

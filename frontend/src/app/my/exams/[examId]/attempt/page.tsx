@@ -999,6 +999,7 @@ export default function SecureExamAttemptPage() {
                         <span style={{ flex: 1, fontWeight: 500, color: '#e2e8f0' }}>{pair.left}</span>
                         <span style={{ color: '#6366f1', fontWeight: 700, fontSize: 18 }}>&rarr;</span>
                         <select
+                          title={`Match for ${pair.left}`}
                           value={ans?.matchAnswers?.[pi] || ''}
                           onChange={(e) => handleMatchAnswer(pi, e.target.value)}
                           style={{ flex: 1, padding: '8px 12px', border: '2px solid #374151', borderRadius: 6, background: '#1a1a2e', color: '#e2e8f0', fontSize: 14, outline: 'none' }}

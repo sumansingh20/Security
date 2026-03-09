@@ -870,6 +870,7 @@ export default function ExamAttemptPage() {
                             <span className="font-medium text-gray-900 flex-1">{pair.left}</span>
                             <span className="text-gray-400">→</span>
                             <select
+                              title={`Match for ${pair.left}`}
                               value={currentMatchAnswers[pairIndex] || ''}
                               onChange={(e) => {
                                 const newMatchAnswers = [...currentMatchAnswers];
@@ -899,6 +900,7 @@ export default function ExamAttemptPage() {
                           <div key={itemIndex} className="flex items-center gap-3 mb-2 p-3 bg-gray-50 rounded-lg">
                             <span className="text-sm font-bold text-gray-400 w-6">{itemIndex + 1}.</span>
                             <select
+                              title={`Order position ${itemIndex + 1}`}
                               value={item}
                               onChange={(e) => {
                                 const newOrder = [...currentOrderAnswer];

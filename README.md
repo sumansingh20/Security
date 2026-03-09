@@ -4,21 +4,21 @@ A full-stack proctored online examination system built for educational instituti
 
 ## Live Demo
 
-- **Frontend:** https://proctoredexam.vercel.app
-- **Backend API:** https://security-api-new.vercel.app
+- **Frontend:** <https://proctoredexam.vercel.app>
+- **Backend API:** <https://security-api-new.vercel.app>
 
 ### Demo Credentials
 
 | Role | Login Method | Credentials |
-|------|-------------|-------------|
-| Admin | Email + Password | `admin@proctorexam.com` / `Admin@123` |
-| Teacher | Email + Password | `teacher@proctorexam.com` / `Teacher@123` |
+| ------ | ------------- | ------------- |
+| Admin | Email + Password | `admin@proctoredexam.com` / `Admin@123` |
+| Teacher | Email + Password | `teacher@proctoredexam.com` / `Teacher@123` |
 | Student | Student ID + DOB | `STU001` / `01012000` |
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+| ------- | --------- |
 | Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Zustand |
 | Backend | Node.js, Express.js, MongoDB (Mongoose), JWT (HttpOnly Cookies) |
 | Real-time | HTTP Polling (Vercel compatible), Socket.IO (local dev) |
@@ -28,6 +28,7 @@ A full-stack proctored online examination system built for educational instituti
 ## Features
 
 ### Exam Security & Proctoring
+
 - Webcam and microphone monitoring during exams
 - Tab switch, window blur, and focus loss detection
 - Copy/paste, right-click, and keyboard shortcut prevention
@@ -38,6 +39,7 @@ A full-stack proctored online examination system built for educational instituti
 - Full audit trail of all security events
 
 ### Student Portal
+
 - DOB-based secure login (Student ID + Date of Birth in DDMMYYYY format)
 - Dashboard with upcoming, active, and completed exams
 - Proctored exam interface with:
@@ -50,6 +52,7 @@ A full-stack proctored online examination system built for educational instituti
 - Result details with score breakdown
 
 ### Teacher Portal
+
 - Create and manage exams with configurable settings:
   - Duration, total marks, passing percentage
   - Negative marking, question shuffling, option shuffling
@@ -67,6 +70,7 @@ A full-stack proctored online examination system built for educational instituti
 - Export results to CSV
 
 ### Admin Portal
+
 - Full user management (create, edit, activate/deactivate, delete)
   - Single user creation wizard
   - Bulk CSV import for students
@@ -80,7 +84,7 @@ A full-stack proctored online examination system built for educational instituti
 
 ## Project Structure
 
-```
+```text
 ├── frontend/                    # Next.js application
 │   ├── src/
 │   │   ├── app/                 # App Router pages
@@ -114,6 +118,7 @@ A full-stack proctored online examination system built for educational instituti
 ## Local Development Setup
 
 ### Prerequisites
+
 - Node.js 18+
 - MongoDB 6+ (local installation or MongoDB Atlas free tier)
 
@@ -125,6 +130,7 @@ npm install
 ```
 
 Create `backend/.env`:
+
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/proctorexam
@@ -148,6 +154,7 @@ npm install
 ```
 
 Create `frontend/.env.local`:
+
 ```env
 NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_BACKEND_URL=http://localhost:5000/api
@@ -162,6 +169,7 @@ npm run dev    # Starts on http://localhost:3000
 ## Deployment to Vercel
 
 ### Backend Deployment
+
 1. Go to [vercel.com](https://vercel.com) → New Project
 2. Import the repository
 3. Set **Root Directory** to `backend`
@@ -174,6 +182,7 @@ npm run dev    # Starts on http://localhost:3000
 6. Deploy
 
 ### Frontend Deployment
+
 1. New Project → Import same repository
 2. Set **Root Directory** to `frontend`
 3. Set **Framework Preset** to "Next.js"
@@ -189,8 +198,9 @@ npm run dev    # Starts on http://localhost:3000
 ## API Routes Overview
 
 ### Authentication
+
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+| -------- | ---------- | ------------- |
 | POST | `/api/auth/register` | Register new user |
 | POST | `/api/auth/login` | Staff login (email + password) |
 | POST | `/api/auth/dob-login` | Student login (studentId + DOB) |
@@ -199,15 +209,19 @@ npm run dev    # Starts on http://localhost:3000
 | GET | `/api/auth/session` | Check session validity |
 
 ### Admin Routes (`/api/admin/*`)
+
 User CRUD, exam management, batch operations, monitoring, results, reports, violations, categories, questions, system settings, audit logs.
 
 ### Teacher Routes (`/api/teacher/*`)
+
 Exam CRUD, question management, batch operations, live monitoring, results, violations, categories.
 
 ### Student Routes (`/api/student/*`)
+
 Available exams, exam details, start exam, save answers, submit exam, view results.
 
 ### Exam Engine Routes (`/api/exam-engine/*`)
+
 DOB-based session login, exam state management, answer submission, violation reporting.
 
 ## Security Measures
@@ -225,7 +239,7 @@ DOB-based session login, exam state management, answer submission, violation rep
 ## Database Models
 
 | Model | Purpose |
-|-------|---------|
+| ------- | --------- |
 | User | Students, teachers, admins with role-based access |
 | Exam | Exam configuration, scheduling, proctoring settings |
 | Question | MCQ questions with options, marks, explanations |
