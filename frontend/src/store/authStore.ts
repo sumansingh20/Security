@@ -84,11 +84,21 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       const response = await api.post('/auth/login', { email, password });
       const data = response.data.data || response.data;
-      const user = data.user || data;
+      const rawUser = data.user || data;
       const token = data.token || response.data.token;
 
+      // Validate user object has required fields before accepting it
+      const user = (rawUser && rawUser.id && rawUser.email) ? rawUser
+        : (rawUser && rawUser._id && rawUser.email) ? { ...rawUser, id: rawUser._id }
+        : null;
+
+      if (!user) {
+        set({ isLoading: false, error: 'Invalid response from server' });
+        return { success: false, error: 'Invalid response from server' };
+      }
+
       // Store token in memory for API calls (fallback for when cookies don't work)
-      if (token) {
+      if (token && typeof window !== 'undefined') {
         sessionStorage.setItem('auth_token', token);
       }
 
@@ -118,11 +128,21 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       const response = await api.post('/auth/dob-login', { studentId, dob, examId });
       const data = response.data.data || response.data;
-      const user = data.user || data;
+      const rawUser = data.user || data;
       const token = data.token || response.data.token;
 
+      // Validate user object has required fields
+      const user = (rawUser && rawUser.id && rawUser.email) ? rawUser
+        : (rawUser && rawUser._id && rawUser.email) ? { ...rawUser, id: rawUser._id }
+        : null;
+
+      if (!user) {
+        set({ isLoading: false, error: 'Invalid response from server' });
+        return { success: false, error: 'Invalid response from server' };
+      }
+
       // Store token in memory for API calls (fallback for when cookies don't work)
-      if (token) {
+      if (token && typeof window !== 'undefined') {
         sessionStorage.setItem('auth_token', token);
       }
 
@@ -199,7 +219,17 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       const response = await api.get('/auth/me');
       const data = response.data.data || response.data;
-      const user = data.user || data;
+      const rawUser = data.user || data;
+
+      // Validate user object
+      const user = (rawUser && rawUser.id && rawUser.email) ? rawUser
+        : (rawUser && rawUser._id && rawUser.email) ? { ...rawUser, id: rawUser._id }
+        : null;
+
+      if (!user) {
+        set({ user: null, isAuthenticated: false, isLoading: false, isInitialized: true, error: null });
+        return false;
+      }
 
       set({
         user,

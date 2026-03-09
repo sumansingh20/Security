@@ -150,7 +150,11 @@ export const useExamStore = create<ExamState>((set, get) => ({
     set({ isAttemptLoading: true });
     try {
       const response = await api.post(`/student/exams/${examId}/start`);
-      const d = response.data.data;
+      const d = response.data?.data;
+      if (!d || !d.submission || !d.questions) {
+        set({ isAttemptLoading: false });
+        throw new Error('Invalid response from server');
+      }
       const submission = d.submission;
       const questions = d.questions;
       const state = d.state || {};
@@ -201,7 +205,11 @@ export const useExamStore = create<ExamState>((set, get) => ({
     set({ isAttemptLoading: true });
     try {
       const response = await api.get(`/student/submissions/${submissionId}`);
-      const d = response.data.data;
+      const d = response.data?.data;
+      if (!d || !d.submission) {
+        set({ isAttemptLoading: false });
+        throw new Error('Invalid response from server');
+      }
       const submission = d.submission;
       const exam = d.exam;
       

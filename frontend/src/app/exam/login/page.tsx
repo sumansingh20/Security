@@ -46,6 +46,12 @@ export default function ExamLoginPage() {
         }),
       });
 
+      if (!response.ok && response.status >= 500) {
+        setError('Server error. Please try again later.');
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
 
       if (!data.success) {

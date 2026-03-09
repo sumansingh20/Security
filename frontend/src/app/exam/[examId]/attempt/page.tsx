@@ -114,9 +114,18 @@ export default function ExamAttemptPage() {
     try {
       const response = await fetch(`${API_URL}/exam-engine/session/${token}`, {
         headers: {
-          'x-browser-fingerprint': fingerprint!,
+          'x-browser-fingerprint': fingerprintRef.current || fingerprint || '',
         },
       });
+
+      if (!response.ok) {
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { reason: `Server error (${response.status})` }; }
+        setError(data?.reason || data?.error || `Server error (${response.status})`);
+        setLoading(false);
+        return;
+      }
 
       const data = await response.json();
 
@@ -157,6 +166,10 @@ export default function ExamAttemptPage() {
 
   // Start timer and heartbeat
   const startTimerAndHeartbeat = (initialTime: number) => {
+    // Clear any existing timers to prevent leaks on re-mount
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
+
     // Use ref for accurate time tracking across heartbeat syncs
     const timeLeftRef = { current: initialTime };
     timerIntervalRef.current = setInterval(() => {
@@ -344,12 +357,13 @@ export default function ExamAttemptPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-browser-fingerprint': fingerprint!,
+            'x-browser-fingerprint': fingerprintRef.current || fingerprint || '',
           },
           body: JSON.stringify({ type, details }),
         }
       );
 
+      if (!response.ok) return;
       const data = await response.json();
 
       if (data.terminated) {
@@ -389,7 +403,7 @@ export default function ExamAttemptPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-browser-fingerprint': fingerprint!,
+            'x-browser-fingerprint': fingerprintRef.current || fingerprint || '',
           },
           body: JSON.stringify({
             questionId,
@@ -400,6 +414,11 @@ export default function ExamAttemptPage() {
         }
       );
 
+      if (!response.ok) {
+        console.error('Save answer failed:', response.status);
+        setSaving(false);
+        return;
+      }
       const data = await response.json();
 
       if (data.terminated) {
@@ -435,11 +454,16 @@ export default function ExamAttemptPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-browser-fingerprint': fingerprint!,
+            'x-browser-fingerprint': fingerprintRef.current || fingerprint || '',
           },
         }
       );
 
+      if (!response.ok) {
+        setWarningMessage(`Submit failed (${response.status}). Please try again.`);
+        setTimeout(() => setWarningMessage(''), 5000);
+        return;
+      }
       const data = await response.json();
 
       if (data.success) {
@@ -895,7 +919,14 @@ export default function ExamAttemptPage() {
                     <div>
                       <p className="text-sm text-gray-500 mb-3">Arrange items in the correct order (1 = first):</p>
                       {(() => {
-                        const currentOrderAnswer = answers.get(currentQ.id)?.orderAnswer || [...(currentQ.orderItems || [])].sort(() => Math.random() - 0.5);
+                        let currentOrderAnswer = answers.get(currentQ.id)?.orderAnswer;
+                        if (!currentOrderAnswer) {
+                          const shuffled = [...(currentQ.orderItems || [])].sort(() => Math.random() - 0.5);
+                          const newAnswers = new Map(answers);
+                          newAnswers.set(currentQ.id, { questionId: currentQ.id, orderAnswer: shuffled });
+                          setAnswers(newAnswers);
+                          currentOrderAnswer = shuffled;
+                        }
                         return currentOrderAnswer.map((item: string, itemIndex: number) => (
                           <div key={itemIndex} className="flex items-center gap-3 mb-2 p-3 bg-gray-50 rounded-lg">
                             <span className="text-sm font-bold text-gray-400 w-6">{itemIndex + 1}.</span>

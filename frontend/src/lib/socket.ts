@@ -6,6 +6,7 @@ class SocketService {
   private maxReconnectAttempts = 5;
 
   connect(token: string) {
+    if (typeof window === 'undefined') return;
     if (this.socket?.connected) {
       return;
     }
@@ -43,14 +44,22 @@ class SocketService {
     });
 
     // Exam-related events (matching backend event names)
-    this.socket.on('time-sync', (data) => {
-      const { useExamStore } = require('@/store/examStore');
-      useExamStore.getState().syncTimer(data.timeRemaining);
+    this.socket.on('time-sync', async (data) => {
+      try {
+        const { useExamStore } = await import('@/store/examStore');
+        useExamStore.getState().syncTimer(data.timeRemaining);
+      } catch (e) {
+        console.error('Failed to sync timer:', e);
+      }
     });
 
-    this.socket.on('exam-submitted', (data) => {
-      const { useExamStore } = require('@/store/examStore');
-      useExamStore.getState().autoSubmit(data.reason);
+    this.socket.on('exam-submitted', async (data) => {
+      try {
+        const { useExamStore } = await import('@/store/examStore');
+        useExamStore.getState().autoSubmit(data.reason);
+      } catch (e) {
+        console.error('Failed to auto-submit:', e);
+      }
     });
 
     this.socket.on('answer-saved', (data) => {
@@ -61,11 +70,16 @@ class SocketService {
       console.log('Violation recorded:', data);
     });
 
-    this.socket.on('session:invalidated', (data) => {
-      // Another login detected - force logout
-      const { useAuthStore } = require('@/store/authStore');
-      useAuthStore.getState().logout();
-      window.location.href = '/login?reason=session_invalidated';
+    this.socket.on('session:invalidated', async () => {
+      try {
+        const { useAuthStore } = await import('@/store/authStore');
+        useAuthStore.getState().logout();
+      } catch (e) {
+        console.error('Failed to logout:', e);
+      }
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?reason=session_invalidated';
+      }
     });
 
     this.socket.on('error', (data) => {

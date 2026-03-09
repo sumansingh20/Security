@@ -556,7 +556,16 @@ export default function SecureExamAttemptPage() {
     if (v === 'C') setCalcDisplay('0');
     else if (v === 'BS') setCalcDisplay(d => d.length > 1 ? d.slice(0, -1) : '0');
     else if (v === '=') {
-      try { setCalcDisplay(String(Function('"use strict";return (' + calcDisplay + ')')())); }
+      try {
+        // Safe math evaluation - only allow numbers and operators
+        const sanitized = calcDisplay.replace(/[^0-9+\-*/.() ]/g, '');
+        if (sanitized !== calcDisplay || !sanitized) {
+          setCalcDisplay('Error');
+        } else {
+          const result = Function('"use strict";return (' + sanitized + ')')();
+          setCalcDisplay(String(Number.isFinite(result) ? result : 'Error'));
+        }
+      }
       catch { setCalcDisplay('Error'); }
     } else {
       setCalcDisplay(d => d === '0' || d === 'Error' ? v : d + v);
