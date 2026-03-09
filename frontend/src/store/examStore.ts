@@ -15,7 +15,7 @@ export interface Question {
   _id: string;
   questionNumber: number;
   questionText: string;
-  questionType: 'mcq-single' | 'mcq-multiple' | 'true-false';
+  questionType: 'mcq-single' | 'mcq-multiple' | 'true-false' | 'fill-blank' | 'short-answer' | 'numerical' | 'long-answer' | 'matching' | 'ordering' | 'image-based' | 'code';
   options?: { _id: string; text: string; imageUrl?: string }[];
   imageUrl?: string;
   marks: number;
@@ -26,6 +26,9 @@ export interface Question {
 export interface Answer {
   questionId: string;
   selectedOptions?: string[];
+  textAnswer?: string;
+  matchAnswers?: string[];
+  orderAnswer?: string[];
   markedForReview: boolean;
   visited: boolean;
   timeTaken?: number;
@@ -443,21 +446,24 @@ export const useExamStore = create<ExamState>((set, get) => ({
       return 'notyetanswered';
     }
     
-    const hasAnswer = 
-      (answer.selectedOptions && answer.selectedOptions.length > 0);
-    
+    const hasAnswer =
+      (answer.selectedOptions && answer.selectedOptions.length > 0) ||
+      (answer.textAnswer && answer.textAnswer.trim().length > 0) ||
+      (answer.matchAnswers && answer.matchAnswers.some(a => a && a.trim().length > 0)) ||
+      (answer.orderAnswer && answer.orderAnswer.length > 0);
+
     if (hasAnswer && answer.markedForReview) {
       return 'answeredflagged';
     }
-    
+
     if (hasAnswer) {
       return 'answered';
     }
-    
+
     if (answer.markedForReview) {
       return 'flagged';
     }
-    
+
     return 'notanswered';
   },
 
@@ -466,15 +472,18 @@ export const useExamStore = create<ExamState>((set, get) => ({
     if (!currentAttempt) {
       return { total: 0, answered: 0, flagged: 0, notAnswered: 0 };
     }
-    
+
     let answered = 0;
     let flagged = 0;
     let notAnswered = 0;
-    
+
     currentAttempt.questions.forEach((q) => {
       const answer = currentAttempt.answers.get(q._id);
-      const hasAnswer = 
-        (answer?.selectedOptions && answer.selectedOptions.length > 0);
+      const hasAnswer =
+        (answer?.selectedOptions && answer.selectedOptions.length > 0) ||
+        (answer?.textAnswer && answer.textAnswer.trim().length > 0) ||
+        (answer?.matchAnswers && answer.matchAnswers.some(a => a && a.trim().length > 0)) ||
+        (answer?.orderAnswer && answer.orderAnswer.length > 0);
       
       if (hasAnswer) {
         answered++;

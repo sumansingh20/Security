@@ -396,6 +396,8 @@ export default function ExamAttemptPage() {
             selectedOption: answer.selectedOption,
             selectedOptions: answer.selectedOptions,
             textAnswer: answer.textAnswer,
+            matchAnswers: answer.matchAnswers,
+            orderAnswer: answer.orderAnswer,
           }),
         }
       );
@@ -508,6 +510,21 @@ export default function ExamAttemptPage() {
   const getQuestionStatus = (questionId: string) => {
     return answers.has(questionId) ? 'answered' : 'unanswered';
   };
+
+  // Initialize shuffled order for ordering questions (once, not during render)
+  useEffect(() => {
+    if (questions.length === 0) return;
+    const newAnswers = new Map(answers);
+    let changed = false;
+    questions.forEach((q) => {
+      if (q.type === 'ordering' && q.orderItems && !newAnswers.get(q.id)?.orderAnswer) {
+        const shuffled = [...q.orderItems].sort(() => Math.random() - 0.5);
+        newAnswers.set(q.id, { ...(newAnswers.get(q.id) || { questionId: q.id }), questionId: q.id, orderAnswer: shuffled });
+        changed = true;
+      }
+    });
+    if (changed) setAnswers(newAnswers);
+  }, [questions]);
 
   // Loading state
   if (loading) {
