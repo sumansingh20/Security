@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface SubmissionDetail {
   _id: string;
@@ -138,7 +139,7 @@ export default function TeacherSubmissionDetailPage() {
                 <tr><td style={{ fontWeight: 'bold', width: '120px' }}>Status</td><td><span className="lms-badge" style={{ textTransform: 'capitalize' }}>{submission.status}</span></td></tr>
                 {submission.submissionType && <tr><td style={{ fontWeight: 'bold' }}>Type</td><td>{submission.submissionType}</td></tr>}
                 <tr><td style={{ fontWeight: 'bold' }}>Time Spent</td><td>{Math.round((submission.timeSpent || 0) / 60)} min</td></tr>
-                {submission.submitTime && <tr><td style={{ fontWeight: 'bold' }}>Submitted</td><td className="font-mono">{new Date(submission.submitTime).toLocaleString()}</td></tr>}
+                {submission.submitTime && <tr><td style={{ fontWeight: 'bold' }}>Submitted</td><td className="font-mono">{safeToLocaleString(submission.submitTime)}</td></tr>}
               </tbody>
             </table>
           </div>
@@ -153,7 +154,7 @@ export default function TeacherSubmissionDetailPage() {
             {submission.violations.map((v, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', padding: '8px 12px', background: 'rgba(239,68,68,0.05)', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.15)' }}>
                 <span className="lms-badge lms-badge-danger">{v.type}</span>
-                <span className="font-mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(v.timestamp).toLocaleString()}</span>
+                <span className="font-mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{safeToLocaleString(v.timestamp)}</span>
                 {v.details && <span>{v.details}</span>}
               </div>
             ))}

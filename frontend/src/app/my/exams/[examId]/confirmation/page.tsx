@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 
 interface ConfirmationData {
   submissionId: string;
@@ -279,7 +280,7 @@ export default function ExamConfirmationPage() {
                     <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>Submitted At:</td>
                     <td style={{ padding: '4px 0', fontFamily: 'monospace' }}>
                       {confirmation?.submittedAt 
-                        ? format(new Date(confirmation.submittedAt), 'dd/MM/yyyy HH:mm:ss')
+                        ? safeFormat(confirmation.submittedAt, 'dd/MM/yyyy HH:mm:ss')
                         : 'N/A'}
                     </td>
                   </tr>
@@ -334,7 +335,7 @@ export default function ExamConfirmationPage() {
             ) : confirmation?.resultsAvailableAt ? (
               <span>
                 Results will be available after{' '}
-                {format(new Date(confirmation.resultsAvailableAt), 'dd/MM/yyyy HH:mm')}
+                {safeFormat(confirmation.resultsAvailableAt, 'dd/MM/yyyy HH:mm')}
               </span>
             ) : (
               <span>Results will be published by the examination controller.</span>

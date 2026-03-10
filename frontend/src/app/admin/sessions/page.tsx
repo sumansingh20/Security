@@ -6,6 +6,7 @@ import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 
 interface ExamSession {
   _id: string;
@@ -325,7 +326,7 @@ export default function SessionInspectorPage() {
                       </span>
                     </td>
                     <td className="font-mono text-xs">{session.ipAddress}</td>
-                    <td className="text-xs">{format(new Date(session.lastActivityAt), 'HH:mm:ss')}</td>
+                    <td className="text-xs">{safeFormat(session.lastActivityAt, 'HH:mm:ss')}</td>
                     <td>
                       <button className="lms-btn lms-btn-sm" onClick={() => setSelectedSession(session)}>
                         Inspect
@@ -371,8 +372,8 @@ export default function SessionInspectorPage() {
                     <tr><td className="text-muted">Email</td><td>{selectedSession.student.email}</td></tr>
                     <tr><td className="text-muted">Exam</td><td>{selectedSession.exam.title}</td></tr>
                     <tr><td className="text-muted">Batch</td><td>Batch {selectedSession.batch}</td></tr>
-                    <tr><td className="text-muted">Started At</td><td>{format(new Date(selectedSession.startedAt), 'dd/MM/yyyy HH:mm:ss')}</td></tr>
-                    <tr><td className="text-muted">Server End</td><td>{format(new Date(selectedSession.serverEndTime), 'dd/MM/yyyy HH:mm:ss')}</td></tr>
+                    <tr><td className="text-muted">Started At</td><td>{safeFormat(selectedSession.startedAt, 'dd/MM/yyyy HH:mm:ss')}</td></tr>
+                    <tr><td className="text-muted">Server End</td><td>{safeFormat(selectedSession.serverEndTime, 'dd/MM/yyyy HH:mm:ss')}</td></tr>
                     <tr><td className="text-muted">Remaining</td><td className="font-mono">{getRemainingTime(selectedSession)}</td></tr>
                     <tr><td className="text-muted">Violations</td><td className={selectedSession.violationCount >= selectedSession.maxViolationsAllowed - 1 ? 'text-red-600 font-bold' : ''}>{selectedSession.violationCount} / {selectedSession.maxViolationsAllowed}</td></tr>
                     <tr><td className="text-muted">IP Address</td><td className="font-mono">{selectedSession.ipAddress}</td></tr>

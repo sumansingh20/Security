@@ -283,7 +283,7 @@ export default function AdminDashboard() {
               <tbody>
                 {recentExams.map((exam) => (
                   <tr key={exam._id}>
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td><strong>{exam.title}</strong></td>
                     <td>{exam.subject || '-'}</td>
                     <td className="font-mono">{exam.startTime ? format(new Date(exam.startTime), 'dd/MM HH:mm') : '-'}</td>

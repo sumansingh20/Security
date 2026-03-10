@@ -210,7 +210,7 @@ export default function TeacherReportsPage() {
               <tbody>
                 {examResults.map((result) => (
                   <tr key={result._id}>
-                    <td className="font-mono text-xs">{result._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono text-xs">{(result._id || '').slice(-8).toUpperCase()}</td>
                     <td>{result.exam.title}</td>
                     <td>{result.exam.subject}</td>
                     <td className="text-center">{result.submissionCount}</td>

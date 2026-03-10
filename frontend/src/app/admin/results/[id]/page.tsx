@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface ResultDetail {
   _id: string;
@@ -95,8 +96,8 @@ export default function AdminResultDetailPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="font-bold text-lg mb-4">Timing</h2>
           <div className="space-y-2 text-sm">
-            <p><span className="text-gray-500">Started:</span> {new Date(result.startedAt).toLocaleString()}</p>
-            <p><span className="text-gray-500">Submitted:</span> {new Date(result.submittedAt).toLocaleString()}</p>
+            <p><span className="text-gray-500">Started:</span> {safeToLocaleString(result.startedAt)}</p>
+            <p><span className="text-gray-500">Submitted:</span> {safeToLocaleString(result.submittedAt)}</p>
           </div>
         </div>
       </div>

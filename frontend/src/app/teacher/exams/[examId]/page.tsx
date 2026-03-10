@@ -6,7 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface Question {
@@ -314,11 +314,11 @@ export default function TeacherExamDetailPage() {
             </div>
             <div className="lms-info-row">
               <div className="lms-info-label">Window Opens:</div>
-              <div className="lms-info-value font-mono">{format(new Date(exam.startTime), 'dd MMM yyyy, HH:mm')}</div>
+              <div className="lms-info-value font-mono">{safeFormat(exam.startTime, 'dd MMM yyyy, HH:mm')}</div>
             </div>
             <div className="lms-info-row">
               <div className="lms-info-label">Window Closes:</div>
-              <div className="lms-info-value font-mono">{format(new Date(exam.endTime), 'dd MMM yyyy, HH:mm')}</div>
+              <div className="lms-info-value font-mono">{safeFormat(exam.endTime, 'dd MMM yyyy, HH:mm')}</div>
             </div>
           </div>
         </div>

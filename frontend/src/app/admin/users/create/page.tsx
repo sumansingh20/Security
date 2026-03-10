@@ -320,7 +320,7 @@ export default function CreateUserPage() {
               </div>
               <div>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#999', letterSpacing: '0.5px' }}>Role</div>
-                <div style={{ fontWeight: 600, marginTop: '4px', color: getRoleColor(createdUser.role) }}>{getRoleIcon(createdUser.role)} {createdUser.role.charAt(0).toUpperCase() + createdUser.role.slice(1)}</div>
+                <div style={{ fontWeight: 600, marginTop: '4px', color: getRoleColor(createdUser.role) }}>{getRoleIcon(createdUser.role)} {createdUser.role ? createdUser.role.charAt(0).toUpperCase() + createdUser.role.slice(1) : 'Unknown'}</div>
               </div>
               <div>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#999', letterSpacing: '0.5px' }}>Password</div>
@@ -610,7 +610,7 @@ export default function CreateUserPage() {
                     <ReviewItem label="First Name" value={formData.firstName} />
                     <ReviewItem label="Last Name" value={formData.lastName} />
                     <ReviewItem label="Email" value={formData.email} />
-                    <ReviewItem label="Role" value={<span style={{ color: getRoleColor(formData.role), fontWeight: 600 }}>{getRoleIcon(formData.role)} {formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}</span>} />
+                    <ReviewItem label="Role" value={<span style={{ color: getRoleColor(formData.role), fontWeight: 600 }}>{getRoleIcon(formData.role)} {formData.role ? formData.role.charAt(0).toUpperCase() + formData.role.slice(1) : 'Unknown'}</span>} />
                     {formData.department && <ReviewItem label="Department" value={DEPARTMENTS.find(d => d.value === formData.department)?.label || formData.department} />}
                     {formData.phone && <ReviewItem label="Phone" value={formData.phone} />}
                     {formData.role === 'student' && (

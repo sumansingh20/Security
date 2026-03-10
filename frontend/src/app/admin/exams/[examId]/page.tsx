@@ -201,7 +201,7 @@ export default function EditExamPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <h1 style={{ fontSize: '1.4rem', fontWeight: 700 }}>{exam.title}</h1>
             <span style={{ padding: '4px 12px', borderRadius: 4, fontSize: 12, fontWeight: 600, ...Object.fromEntries((STATUS_BADGE[exam.status] || '').split(';').filter(Boolean).map(s => { const [k,v] = s.split(':').map(x => x.trim()); return [k, v]; })) } as any}>
-              {exam.status.toUpperCase()}
+              {(exam.status || '').toUpperCase()}
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface Result {
   _id: string;
@@ -99,7 +100,7 @@ export default function TeacherResultsPage() {
                     </span>
                   </td>
                   <td>{r.totalViolations || 0}</td>
-                  <td style={{ fontSize: '13px' }}>{new Date(r.submittedAt).toLocaleString()}</td>
+                  <td style={{ fontSize: '13px' }}>{safeToLocaleString(r.submittedAt)}</td>
                   <td>
                     <button onClick={() => router.push(`/teacher/exams/${selectedExam}/submissions/${r._id}`)}
                       className="lms-link" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>

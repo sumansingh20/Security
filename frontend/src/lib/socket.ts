@@ -1,20 +1,38 @@
 import { io, Socket } from 'socket.io-client';
 
 class SocketService {
-  private socket: Socket | null = null;
+  private examSocket: Socket | null = null;
+  private monitorSocket: Socket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
 
-  connect(token: string) {
+  // Connect to exam-session namespace (student taking exam)
+  connectExamSession(sessionToken: string, fingerprint: string) {
     if (typeof window === 'undefined') return;
-    if (this.socket?.connected) {
-      return;
-    }
+    if (this.examSocket?.connected) return;
 
     const socketUrl = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
 
-    // Connect to /exam namespace (matching backend)
-    this.socket = io(`${socketUrl}/exam`, {
+    this.examSocket = io(`${socketUrl}/exam-session`, {
+      auth: { sessionToken, fingerprint },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: this.maxReconnectAttempts,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+    });
+
+    this.setupExamListeners();
+  }
+
+  // Connect to exam-monitor namespace (teacher/admin monitoring)
+  connectMonitor(token: string) {
+    if (typeof window === 'undefined') return;
+    if (this.monitorSocket?.connected) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+
+    this.monitorSocket = io(`${socketUrl}/exam-monitor`, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -23,134 +41,296 @@ class SocketService {
       reconnectionDelayMax: 5000,
     });
 
-    this.setupEventListeners();
+    this.setupMonitorListeners();
   }
 
-  private setupEventListeners() {
-    if (!this.socket) return;
+  // Legacy connect method (backwards compatible)
+  connect(token: string) {
+    this.connectMonitor(token);
+  }
 
-    this.socket.on('connect', () => {
-      console.log('Socket connected');
+  private setupExamListeners() {
+    if (!this.examSocket) return;
+
+    this.examSocket.on('connect', () => {
+      console.log('[Exam Socket] Connected');
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+    this.examSocket.on('disconnect', (reason) => {
+      console.log('[Exam Socket] Disconnected:', reason);
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    this.examSocket.on('connect_error', (error) => {
+      console.error('[Exam Socket] Connection error:', error.message);
       this.reconnectAttempts++;
     });
 
-    // Exam-related events (matching backend event names)
-    this.socket.on('time-sync', async (data) => {
+    // Session joined confirmation
+    this.examSocket.on('session-joined', (data) => {
+      console.log('[Exam Socket] Session joined:', data);
+    });
+
+    // Answer saved confirmation
+    this.examSocket.on('answer-saved', (data) => {
+      console.log('[Exam Socket] Answer saved:', data);
+    });
+
+    this.examSocket.on('save-failed', (data) => {
+      console.error('[Exam Socket] Save failed:', data.reason);
+    });
+
+    // Violation recorded
+    this.examSocket.on('violation-recorded', (data) => {
+      console.log('[Exam Socket] Violation recorded:', data);
+    });
+
+    // Time expired
+    this.examSocket.on('time-expired', async () => {
       try {
         const { useExamStore } = await import('@/store/examStore');
-        useExamStore.getState().syncTimer(data.timeRemaining);
+        useExamStore.getState().autoSubmit('time_expired');
       } catch (e) {
-        console.error('Failed to sync timer:', e);
+        console.error('Failed to handle time expiry:', e);
       }
     });
 
-    this.socket.on('exam-submitted', async (data) => {
+    // Force submit by admin
+    this.examSocket.on('force-submit', async (data) => {
       try {
         const { useExamStore } = await import('@/store/examStore');
-        useExamStore.getState().autoSubmit(data.reason);
+        useExamStore.getState().autoSubmit(data.reason || 'admin_force_submit');
       } catch (e) {
-        console.error('Failed to auto-submit:', e);
+        console.error('Failed to handle force submit:', e);
       }
     });
 
-    this.socket.on('answer-saved', (data) => {
-      console.log('Answer saved:', data);
-    });
-
-    this.socket.on('violation-recorded', (data) => {
-      console.log('Violation recorded:', data);
-    });
-
-    this.socket.on('session:invalidated', async () => {
-      try {
-        const { useAuthStore } = await import('@/store/authStore');
-        useAuthStore.getState().logout();
-      } catch (e) {
-        console.error('Failed to logout:', e);
-      }
+    // Session terminated
+    this.examSocket.on('session-terminated', async (data) => {
+      console.error('[Exam Socket] Session terminated:', data.reason);
       if (typeof window !== 'undefined') {
-        window.location.href = '/login?reason=session_invalidated';
+        alert(data.reason || 'Your session has been terminated.');
+        window.location.href = '/';
       }
     });
 
-    this.socket.on('error', (data) => {
-      console.error('Socket error:', data.message);
+    // Exam submitted confirmation
+    this.examSocket.on('exam-submitted', (data) => {
+      console.log('[Exam Socket] Exam submitted:', data);
+    });
+
+    // Admin broadcast message
+    this.examSocket.on('admin-message', (data) => {
+      if (typeof window !== 'undefined') {
+        alert(`Message from examiner: ${data.message}`);
+      }
+    });
+
+    // Heartbeat response
+    this.examSocket.on('heartbeat-response', async (data) => {
+      try {
+        const { useExamStore } = await import('@/store/examStore');
+        useExamStore.getState().syncTimer(data.remainingTime);
+      } catch (e) {
+        // Timer sync from heartbeat
+      }
+    });
+
+    this.examSocket.on('error', (data) => {
+      console.error('[Exam Socket] Error:', data.message, data.code);
+    });
+  }
+
+  private setupMonitorListeners() {
+    if (!this.monitorSocket) return;
+
+    this.monitorSocket.on('connect', () => {
+      console.log('[Monitor Socket] Connected');
+    });
+
+    this.monitorSocket.on('disconnect', (reason) => {
+      console.log('[Monitor Socket] Disconnected:', reason);
+    });
+
+    this.monitorSocket.on('connect_error', (error) => {
+      console.error('[Monitor Socket] Connection error:', error.message);
+    });
+
+    // Exam stats update
+    this.monitorSocket.on('exam-stats', (data) => {
+      console.log('[Monitor Socket] Exam stats:', data);
+    });
+
+    // Student events
+    this.monitorSocket.on('student-joined', (data) => {
+      console.log('[Monitor] Student joined:', data);
+    });
+
+    this.monitorSocket.on('student-submitted', (data) => {
+      console.log('[Monitor] Student submitted:', data);
+    });
+
+    this.monitorSocket.on('student-disconnected', (data) => {
+      console.log('[Monitor] Student disconnected:', data);
+    });
+
+    this.monitorSocket.on('violation-alert', (data) => {
+      console.log('[Monitor] Violation alert:', data);
+    });
+
+    this.monitorSocket.on('error', (data) => {
+      console.error('[Monitor Socket] Error:', data.message);
     });
   }
 
   disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
+    if (this.examSocket) {
+      this.examSocket.disconnect();
+      this.examSocket = null;
+    }
+    if (this.monitorSocket) {
+      this.monitorSocket.disconnect();
+      this.monitorSocket = null;
     }
   }
 
-  // Exam room management (matching backend event names)
-  joinExamRoom(submissionId: string) {
-    this.socket?.emit('join-exam', { submissionId });
+  disconnectExam() {
+    if (this.examSocket) {
+      this.examSocket.disconnect();
+      this.examSocket = null;
+    }
   }
 
-  leaveExamRoom(submissionId: string) {
-    this.socket?.emit('leave-exam', { submissionId });
+  disconnectMonitor() {
+    if (this.monitorSocket) {
+      this.monitorSocket.disconnect();
+      this.monitorSocket = null;
+    }
   }
 
-  // Save answer via socket (for real-time sync)
-  saveAnswer(submissionId: string, questionId: string, answer: any) {
-    this.socket?.emit('save-answer', {
-      submissionId,
-      questionId,
-      selectedOptions: answer.selectedOptions,
-      markedForReview: answer.markedForReview,
-      timeTaken: answer.timeTaken,
-    });
+  // ========== EXAM SESSION METHODS ==========
+
+  // Join exam session room (student)
+  joinExamRoom(sessionToken: string, fingerprint: string) {
+    this.examSocket?.emit('join-exam', { sessionToken, fingerprint });
+  }
+
+  // Save answer via socket (real-time sync)
+  saveAnswer(questionId: string, answer: any) {
+    this.examSocket?.emit('save-answer', { questionId, answer });
   }
 
   // Report violation
-  reportViolation(submissionId: string, type: string, details?: any) {
-    this.socket?.emit('violation', {
-      submissionId,
-      type,
-      description: details?.description,
-      questionNumber: details?.questionNumber,
-      timestamp: new Date().toISOString(),
-    });
+  reportViolation(type: string, details?: string) {
+    this.examSocket?.emit('violation', { type, details });
   }
 
-  // Request state sync (after reconnection)
-  requestSync(submissionId: string) {
-    this.socket?.emit('request-sync', { submissionId });
+  // Submit exam via socket
+  submitExam() {
+    this.examSocket?.emit('submit-exam');
   }
 
-  // Event listeners
+  // Send heartbeat
+  sendHeartbeat() {
+    this.examSocket?.emit('heartbeat');
+  }
+
+  // ========== MONITOR METHODS ==========
+
+  // Join exam monitor room (teacher/admin)
+  joinMonitorRoom(examId: string, token: string) {
+    this.monitorSocket?.emit('join-exam-monitor', { examId, token });
+  }
+
+  // Request stats refresh
+  requestStats() {
+    this.monitorSocket?.emit('request-stats');
+  }
+
+  // Force submit a student
+  forceSubmitStudent(sessionToken: string, reason: string) {
+    this.monitorSocket?.emit('force-submit-student', { sessionToken, reason });
+  }
+
+  // Terminate a session
+  terminateSession(sessionToken: string, reason: string) {
+    this.monitorSocket?.emit('terminate-session', { sessionToken, reason });
+  }
+
+  // Broadcast message to all students
+  broadcastMessage(message: string) {
+    this.monitorSocket?.emit('broadcast-message', { message });
+  }
+
+  // ========== EVENT LISTENERS ==========
+
   onTimerUpdate(callback: (timeRemaining: number) => void) {
-    this.socket?.on('time-sync', (data) => callback(data.timeRemaining));
+    this.examSocket?.on('heartbeat-response', (data) => callback(data.remainingTime));
   }
 
   onAutoSubmit(callback: (reason: string) => void) {
-    this.socket?.on('exam-submitted', (data) => callback(data.reason));
+    this.examSocket?.on('force-submit', (data) => callback(data.reason));
+    this.examSocket?.on('time-expired', () => callback('time_expired'));
+  }
+
+  onExamSubmitted(callback: (data: any) => void) {
+    this.examSocket?.on('exam-submitted', callback);
+  }
+
+  onSessionJoined(callback: (data: any) => void) {
+    this.examSocket?.on('session-joined', callback);
+  }
+
+  onAnswerSaved(callback: (data: any) => void) {
+    this.examSocket?.on('answer-saved', callback);
+  }
+
+  onViolationRecorded(callback: (data: any) => void) {
+    this.examSocket?.on('violation-recorded', callback);
+  }
+
+  // Monitor listeners
+  onExamStats(callback: (data: any) => void) {
+    this.monitorSocket?.on('exam-stats', callback);
+  }
+
+  onStudentJoined(callback: (data: any) => void) {
+    this.monitorSocket?.on('student-joined', callback);
+  }
+
+  onStudentSubmitted(callback: (data: any) => void) {
+    this.monitorSocket?.on('student-submitted', callback);
+  }
+
+  onStudentDisconnected(callback: (data: any) => void) {
+    this.monitorSocket?.on('student-disconnected', callback);
+  }
+
+  onViolationAlert(callback: (data: any) => void) {
+    this.monitorSocket?.on('violation-alert', callback);
   }
 
   onStateSync(callback: (state: any) => void) {
-    this.socket?.on('exam-state', callback);
+    this.examSocket?.on('session-joined', callback);
   }
 
   // Remove event listener
   off(event: string) {
-    this.socket?.off(event);
+    this.examSocket?.off(event);
+    this.monitorSocket?.off(event);
   }
 
   // Check connection status
   isConnected(): boolean {
-    return this.socket?.connected ?? false;
+    return this.examSocket?.connected ?? this.monitorSocket?.connected ?? false;
+  }
+
+  isExamConnected(): boolean {
+    return this.examSocket?.connected ?? false;
+  }
+
+  isMonitorConnected(): boolean {
+    return this.monitorSocket?.connected ?? false;
   }
 }
 

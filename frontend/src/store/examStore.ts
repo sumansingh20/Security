@@ -186,8 +186,8 @@ export const useExamStore = create<ExamState>((set, get) => ({
         status: 'in-progress',
       };
       
-      // Connect to socket for real-time sync
-      socketService.joinExamRoom(submission.id || submission._id);
+      // Note: Socket connection for real-time sync is handled by the exam attempt pages directly
+      // The examStore provides state management, actual socket is connected per-page
       
       set({ 
         currentAttempt, 
@@ -229,8 +229,6 @@ export const useExamStore = create<ExamState>((set, get) => ({
         violationCount: submission.totalViolations || 0,
         status: submission.status,
       };
-      
-      socketService.joinExamRoom(submission.id || submission._id);
       
       set({ 
         currentAttempt, 
@@ -317,7 +315,7 @@ export const useExamStore = create<ExamState>((set, get) => ({
       await api.post(`/student/submissions/${currentAttempt._id}/answer`, serverPayload);
       
       // Also emit via socket for real-time sync
-      socketService.saveAnswer(currentAttempt._id, questionId, answerUpdate);
+      socketService.saveAnswer(questionId, answerUpdate);
       
       set({ isSaving: false, lastSaved: new Date() });
     } catch (error) {
@@ -352,7 +350,7 @@ export const useExamStore = create<ExamState>((set, get) => ({
     try {
       const response = await api.post(`/student/submissions/${currentAttempt._id}/submit`);
       
-      socketService.leaveExamRoom(currentAttempt._id);
+      socketService.disconnectExam();
       
       set({
         currentAttempt: {
@@ -374,7 +372,7 @@ export const useExamStore = create<ExamState>((set, get) => ({
     try {
       await api.post(`/student/submissions/${currentAttempt._id}/submit`, { reason, autoSubmit: true });
       
-      socketService.leaveExamRoom(currentAttempt._id);
+      socketService.disconnectExam();
       
       set({
         currentAttempt: {

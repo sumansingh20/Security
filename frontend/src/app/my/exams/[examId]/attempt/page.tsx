@@ -158,27 +158,66 @@ export default function SecureExamAttemptPage() {
      ═══════════════════════════════════════════════ */
   const startCamera = useCallback(async (): Promise<boolean> => {
     try {
+      // Use lenient constraints to maximize compatibility
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 240, facingMode: 'user' },
+        video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
         audio: false,
       });
+      // Verify that video tracks are live
+      const videoTrack = stream.getVideoTracks()[0];
+      if (!videoTrack || videoTrack.readyState !== 'live') {
+        setCameraError('Camera stream is not active. Please check your camera.');
+        return false;
+      }
       setCameraStream(stream);
       setCameraError('');
+      // Try immediate assignment if video element already exists
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        try { await videoRef.current.play(); } catch {}
       }
       return true;
-    } catch {
-      setCameraError('Camera access denied. Proctoring requires camera.');
+    } catch (err: any) {
+      const msg = err?.name === 'NotAllowedError'
+        ? 'Camera access denied. Please allow camera in browser settings.'
+        : err?.name === 'NotFoundError'
+        ? 'No camera found. Please connect a camera.'
+        : err?.name === 'NotReadableError'
+        ? 'Camera is in use by another application.'
+        : 'Camera access failed. Proctoring requires camera.';
+      setCameraError(msg);
       return false;
     }
   }, []);
 
+  // Wire camera stream to video element whenever stream or phase changes
   useEffect(() => {
-    if (cameraStream && videoRef.current) {
-      videoRef.current.srcObject = cameraStream;
-    }
-  }, [cameraStream]);
+    if (!cameraStream) return;
+
+    const attachStream = () => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = cameraStream;
+        videoRef.current.play().catch(() => {});
+        return true;
+      }
+      return false;
+    };
+
+    // Try immediately
+    if (attachStream()) return;
+
+    // If video element isn't available yet (phase transitioning), retry with small delays
+    let retries = 0;
+    const maxRetries = 10;
+    const retryInterval = setInterval(() => {
+      retries++;
+      if (attachStream() || retries >= maxRetries) {
+        clearInterval(retryInterval);
+      }
+    }, 100);
+
+    return () => clearInterval(retryInterval);
+  }, [cameraStream, phase]);
 
   useEffect(() => {
     return () => {
@@ -196,15 +235,21 @@ export default function SecureExamAttemptPage() {
       setMicError('');
 
       const audioCtx = new AudioContext();
+      // Explicitly resume AudioContext - required by many browsers after user gesture
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
       source.connect(analyser);
       audioCtxRef.current = audioCtx;
       analyserRef.current = analyser;
 
       const dataArr = new Uint8Array(analyser.frequencyBinCount);
       const poll = () => {
+        if (audioCtx.state === 'closed') return;
         analyser.getByteFrequencyData(dataArr);
         const avg = dataArr.reduce((s, v) => s + v, 0) / dataArr.length;
         setMicLevel(Math.min(100, Math.round((avg / 128) * 100)));
@@ -212,8 +257,13 @@ export default function SecureExamAttemptPage() {
       };
       poll();
       return true;
-    } catch {
-      setMicError('Microphone access denied.');
+    } catch (err: any) {
+      const msg = err?.name === 'NotAllowedError'
+        ? 'Microphone access denied. Please allow mic in browser settings.'
+        : err?.name === 'NotFoundError'
+        ? 'No microphone found.'
+        : 'Microphone access failed.';
+      setMicError(msg);
       return false;
     }
   }, []);

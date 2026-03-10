@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import SidebarLayout from '@/components/layouts/SidebarLayout';
 import { useAuthStore } from '@/store/authStore';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface OnlineUser {
   _id: string;
@@ -100,7 +101,7 @@ export default function OnlineUsersReportPage() {
                       <td className="px-4 py-3 text-sm text-center">
                         <span className={`px-2 py-1 rounded text-xs ${roleColors[u.role] || 'bg-gray-100 text-gray-700'}`}>{u.role}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm">{new Date(u.lastActive).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm">{safeToLocaleString(u.lastActive)}</td>
                       <td className="px-4 py-3 text-sm">{u.currentActivity || '—'}</td>
                     </tr>
                   ))}

@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface Result {
@@ -199,7 +199,7 @@ export default function ResultsPage() {
                     </td>
                     <td style={{ textAlign: 'center' }}>{result.attemptNumber || 1}</td>
                     <td className="font-mono" style={{ fontSize: '11px' }}>
-                      {format(new Date(result.submittedAt), 'dd MMM yyyy HH:mm')}
+                      {safeFormat(result.submittedAt, 'dd MMM yyyy HH:mm')}
                     </td>
                     <td>
                       <Link

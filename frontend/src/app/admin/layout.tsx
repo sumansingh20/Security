@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (user?.role === 'student') {
+  if (user?.role !== 'admin') {
     return (
       <div className="auth-status-page">
         <div className="auth-status-icon denied">
@@ -57,8 +57,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </svg>
         </div>
         <h1 className="auth-status-title warning">Access Denied</h1>
-        <p className="auth-status-desc">You do not have permission to access this area.</p>
-        <a href="/my" className="auth-status-btn">Go to Student Portal</a>
+        <p className="auth-status-desc">You do not have permission to access the administration area.</p>
+        <a href={user?.role === 'teacher' ? '/teacher' : '/my'} className="auth-status-btn">
+          {user?.role === 'teacher' ? 'Go to Teacher Panel' : 'Go to Student Portal'}
+        </a>
       </div>
     );
   }

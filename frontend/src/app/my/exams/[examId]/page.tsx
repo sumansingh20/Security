@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
-import { format, isAfter, isBefore } from 'date-fns';
+import { isAfter, isBefore } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface ExamData {
@@ -130,7 +131,7 @@ export default function ExamDetailsPage() {
       {isUpcoming && (
         <div className="lms-alert lms-alert-info">
           <div className="lms-alert-title">UPCOMING EXAMINATION</div>
-          <div>This examination will open on {format(new Date(exam.startTime), 'dd MMM yyyy, HH:mm')}.</div>
+          <div>This examination will open on {safeFormat(exam.startTime, 'dd MMM yyyy, HH:mm')}.</div>
         </div>
       )}
       {isEnded && (
@@ -178,11 +179,11 @@ export default function ExamDetailsPage() {
             <tbody>
               <tr>
                 <td style={{ width: '160px', fontWeight: 'bold' }}>Opens</td>
-                <td className="font-mono">{format(new Date(exam.startTime), 'EEEE, dd MMMM yyyy — HH:mm')}</td>
+                <td className="font-mono">{safeFormat(exam.startTime, 'EEEE, dd MMMM yyyy — HH:mm')}</td>
               </tr>
               <tr>
                 <td style={{ fontWeight: 'bold' }}>Closes</td>
-                <td className="font-mono">{format(new Date(exam.endTime), 'EEEE, dd MMMM yyyy — HH:mm')}</td>
+                <td className="font-mono">{safeFormat(exam.endTime, 'EEEE, dd MMMM yyyy — HH:mm')}</td>
               </tr>
               <tr>
                 <td style={{ fontWeight: 'bold' }}>Duration</td>

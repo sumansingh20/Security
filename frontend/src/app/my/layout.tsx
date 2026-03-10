@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, checkAuth } = useAuthStore();
   const [authChecked, setAuthChecked] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +51,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }
 
   if (user?.role === 'admin') {
+    if (typeof window !== 'undefined') router.replace('/admin/dashboard');
     return (
       <div className="auth-status-page">
         <div className="auth-status-icon redirect">
@@ -64,6 +67,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }
 
   if (user?.role === 'teacher') {
+    if (typeof window !== 'undefined') router.replace('/teacher');
     return (
       <div className="auth-status-page">
         <div className="auth-status-icon redirect">

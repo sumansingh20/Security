@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import SidebarLayout from '@/components/layouts/SidebarLayout';
 import { useAuthStore } from '@/store/authStore';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface SecurityEvent {
   _id: string;
@@ -128,7 +129,7 @@ export default function SecurityReportPage() {
                     <td className="px-4 py-3 text-sm max-w-xs truncate">{e.description}</td>
                     <td className="px-4 py-3 text-sm">{e.userName || '—'}</td>
                     <td className="px-4 py-3 text-xs font-mono">{e.ip || '—'}</td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">{new Date(e.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{safeToLocaleString(e.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>

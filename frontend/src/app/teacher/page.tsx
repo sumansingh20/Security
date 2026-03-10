@@ -236,10 +236,10 @@ export default function TeacherDashboard() {
               <tbody>
                 {activeExams.map((exam) => (
                   <tr key={exam._id}>
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td><strong>{exam.title}</strong></td>
                     <td>{exam.subject || '-'}</td>
-                    <td className="font-mono countdown-text">{format(new Date(exam.endTime), 'dd/MM HH:mm')}</td>
+                    <td className="font-mono countdown-text">{exam.endTime ? format(new Date(exam.endTime), 'dd/MM HH:mm') : '-'}</td>
                     <td>{exam.submissionCount || 0}</td>
                     <td style={{ color: (exam.violationCount || 0) > 0 ? 'var(--error)' : undefined }}>{exam.violationCount || 0}</td>
                     <td>
@@ -276,11 +276,11 @@ export default function TeacherDashboard() {
               <tbody>
                 {recentExams.map((exam) => (
                   <tr key={exam._id}>
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td><strong>{exam.title}</strong></td>
                     <td>{exam.subject || '-'}</td>
-                    <td className="font-mono">{format(new Date(exam.startTime), 'dd/MM HH:mm')}</td>
-                    <td className="font-mono">{format(new Date(exam.endTime), 'dd/MM HH:mm')}</td>
+                    <td className="font-mono">{exam.startTime ? format(new Date(exam.startTime), 'dd/MM HH:mm') : '-'}</td>
+                    <td className="font-mono">{exam.endTime ? format(new Date(exam.endTime), 'dd/MM HH:mm') : '-'}</td>
                     <td>
                       <span className={`lms-status ${
                         exam.status === 'ongoing' ? 'lms-status-active pulse-status' :

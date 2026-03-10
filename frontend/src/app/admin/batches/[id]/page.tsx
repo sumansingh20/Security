@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import SidebarLayout from '@/components/layouts/SidebarLayout';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface BatchStudent {
   _id: string;
@@ -97,12 +98,12 @@ export default function BatchDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-white rounded-lg shadow p-4">
               <span className="text-gray-500 text-sm">Start Time</span>
-              <p className="mt-1">{new Date(batch.startTime).toLocaleString()}</p>
+              <p className="mt-1">{safeToLocaleString(batch.startTime)}</p>
             </div>
             {batch.endTime && (
               <div className="bg-white rounded-lg shadow p-4">
                 <span className="text-gray-500 text-sm">End Time</span>
-                <p className="mt-1">{new Date(batch.endTime).toLocaleString()}</p>
+                <p className="mt-1">{safeToLocaleString(batch.endTime)}</p>
               </div>
             )}
           </div>

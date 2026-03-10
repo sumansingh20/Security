@@ -6,6 +6,7 @@ import LMSLayout from '@/components/layouts/LMSLayout';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 
 interface UserDetail {
   _id: string;
@@ -182,7 +183,7 @@ export default function UserDetailPage() {
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px', flexWrap: 'wrap' }}>
                 <span className={`lms-status ${user.role === 'admin' ? 'lms-status-closed' : user.role === 'teacher' ? 'lms-status-info' : 'lms-status-active'}`}>
-                  {getRoleIcon(user.role)} {user.role.toUpperCase()}
+                  {getRoleIcon(user.role)} {(user.role || 'user').toUpperCase()}
                 </span>
                 <span className={`lms-status ${user.isActive ? 'lms-status-active' : 'lms-status-closed'}`}>
                   {user.isActive ? '● ACTIVE' : '● INACTIVE'}
@@ -254,7 +255,7 @@ export default function UserDetailPage() {
                   <InfoItem label="First Name" value={user.firstName} />
                   <InfoItem label="Last Name" value={user.lastName} />
                   <InfoItem label="Email" value={user.email} mono />
-                  <InfoItem label="Role" value={<span style={{ color: getRoleColor(user.role), fontWeight: 600 }}>{getRoleIcon(user.role)} {user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>} />
+                  <InfoItem label="Role" value={<span style={{ color: getRoleColor(user.role), fontWeight: 600 }}>{getRoleIcon(user.role)} {(user.role || '').charAt(0).toUpperCase() + (user.role || '').slice(1)}</span>} />
                   <InfoItem label="Department" value={user.department || '-'} />
                   <InfoItem label="Phone" value={user.phone || '-'} />
                 </>
@@ -326,14 +327,14 @@ export default function UserDetailPage() {
           <div className="lms-section animate-fade-in-up" style={{ marginBottom: '20px' }}>
             <div className="lms-section-title">Account Info</div>
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <InfoItem label="User ID" value={user._id.slice(-12).toUpperCase()} mono />
+              <InfoItem label="User ID" value={(user._id || '').slice(-12).toUpperCase()} mono />
               <InfoItem label="Status" value={
                 <span className={`lms-status ${user.isActive ? 'lms-status-active' : 'lms-status-closed'}`}>
                   {user.isActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
               } />
               <InfoItem label="Verified" value={user.isVerified ? 'Yes' : 'No'} />
-              <InfoItem label="Joined" value={format(new Date(user.createdAt), 'dd MMM yyyy')} />
+              <InfoItem label="Joined" value={safeFormat(user.createdAt, 'dd MMM yyyy')} />
               <InfoItem label="Last Login" value={user.lastLogin ? format(new Date(user.lastLogin), 'dd MMM yyyy HH:mm') : 'Never'} />
             </div>
           </div>

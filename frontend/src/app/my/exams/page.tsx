@@ -213,12 +213,12 @@ export default function ExamListPage() {
 
                   return (
                     <tr key={exam._id}>
-                      <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                      <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                       <td>{exam.title}</td>
                       <td>{exam.subject || '-'}</td>
                       <td>{exam.duration} min</td>
-                      <td className="font-mono">{format(new Date(exam.startTime), 'dd/MM/yy HH:mm')}</td>
-                      <td className="font-mono">{format(new Date(exam.endTime), 'dd/MM/yy HH:mm')}</td>
+                      <td className="font-mono">{exam.startTime ? format(new Date(exam.startTime), 'dd/MM/yy HH:mm') : '-'}</td>
+                      <td className="font-mono">{exam.endTime ? format(new Date(exam.endTime), 'dd/MM/yy HH:mm') : '-'}</td>
                       <td>{exam.attemptCount || 0} / {exam.maxAttempts || 1}</td>
                       <td>
                         <span className={`lms-status ${statusDisplay.className}`}>

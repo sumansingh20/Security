@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface ActiveSession {
@@ -268,10 +269,10 @@ export default function TeacherMonitorPage() {
               <tbody>
                 {activeExams.map((exam) => (
                   <tr key={exam._id}>
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td>{exam.title}</td>
-                    <td className="font-mono">{format(new Date(exam.startTime), 'dd/MM HH:mm')}</td>
-                    <td className="font-mono">{format(new Date(exam.endTime), 'dd/MM HH:mm')}</td>
+                    <td className="font-mono">{safeFormat(exam.startTime, 'dd/MM HH:mm')}</td>
+                    <td className="font-mono">{safeFormat(exam.endTime, 'dd/MM HH:mm')}</td>
                     <td>
                       <strong>{exam.activeStudents}</strong> / {exam.totalStudents}
                     </td>
@@ -355,7 +356,7 @@ export default function TeacherMonitorPage() {
                       {formatTimeRemaining(session.timeRemaining)}
                     </td>
                     <td className="font-mono text-xs">
-                      {format(new Date(session.lastActivity), 'HH:mm:ss')}
+                      {safeFormat(session.lastActivity, 'HH:mm:ss')}
                     </td>
                     <td className={session.violationCount > 0 ? 'text-red-700 font-bold' : ''}>
                       {session.violationCount || 0}

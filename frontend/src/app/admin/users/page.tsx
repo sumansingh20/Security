@@ -289,7 +289,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {filteredUsers.map((user) => (
                   <tr key={user._id}>
-                    <td className="font-mono">{user._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(user._id || '').slice(-8).toUpperCase()}</td>
                     <td>{user.firstName} {user.lastName}</td>
                     <td>{user.email}</td>
                     <td>
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
                         user.role === 'admin' ? 'lms-status-closed' :
                         user.role === 'teacher' ? 'lms-status-info' : ''
                       }`}>
-                        {user.role.toUpperCase()}
+                        {(user.role || 'user').toUpperCase()}
                       </span>
                     </td>
                     <td className="font-mono">{user.studentId || '-'}</td>

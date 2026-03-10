@@ -6,7 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface Violation {
@@ -271,7 +271,7 @@ export default function TeacherViolationsPage() {
                 {violations.map((violation) => (
                   <tr key={violation._id}>
                     <td className="font-mono" style={{ fontSize: '11px' }}>
-                      {format(new Date(violation.timestamp), 'dd/MM/yyyy HH:mm:ss')}
+                      {safeFormat(violation.timestamp, 'dd/MM/yyyy HH:mm:ss')}
                     </td>
                     <td className="font-mono">
                       {violation.student?.studentId || 'N/A'}
@@ -283,8 +283,8 @@ export default function TeacherViolationsPage() {
                     </td>
                     <td>{getViolationTypeLabel(violation.type)}</td>
                     <td>
-                      <span className={`lms-status ${getSeverityClass(violation.severity)}`}>
-                        {violation.severity.toUpperCase()}
+                      <span className={`lms-status ${getSeverityClass(violation.severity || 'medium')}`}>
+                        {(violation.severity || 'medium').toUpperCase()}
                       </span>
                     </td>
                     <td className="font-mono" style={{ fontSize: '11px' }}>

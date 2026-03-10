@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import SidebarLayout from '@/components/layouts/SidebarLayout';
 import { useAuthStore } from '@/store/authStore';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface ViolationEntry {
   _id: string;
@@ -105,7 +106,7 @@ export default function ViolationsReportPage() {
                         {v.severity || 'unknown'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">{new Date(v.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm">{safeToLocaleString(v.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>

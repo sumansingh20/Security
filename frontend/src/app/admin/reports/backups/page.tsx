@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SidebarLayout from '@/components/layouts/SidebarLayout';
 import { useAuthStore } from '@/store/authStore';
+import { safeToLocaleString } from '@/lib/dateUtils';
 
 interface BackupEntry {
   id: string;
@@ -102,7 +103,7 @@ export default function BackupsReportPage() {
                     <td className="px-4 py-3 text-sm text-center">
                       <span className={`px-2 py-1 rounded text-xs ${statusColors[b.status] || 'bg-gray-100 text-gray-700'}`}>{b.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-sm">{new Date(b.createdAt).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-sm">{safeToLocaleString(b.createdAt)}</td>
                     <td className="px-4 py-3 text-sm text-center">{b.duration}</td>
                   </tr>
                 ))}

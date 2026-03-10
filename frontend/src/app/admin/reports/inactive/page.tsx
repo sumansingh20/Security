@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import SidebarLayout from '@/components/layouts/SidebarLayout';
 import { useAuthStore } from '@/store/authStore';
+import { safeToLocaleString, safeToLocaleDateString } from '@/lib/dateUtils';
 
 interface InactiveUser {
   _id: string;
@@ -98,8 +99,8 @@ export default function InactiveUsersReportPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">{u.email}</td>
                     <td className="px-4 py-3 text-sm text-center capitalize">{u.role}</td>
-                    <td className="px-4 py-3 text-sm">{u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}</td>
-                    <td className="px-4 py-3 text-sm">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-sm">{u.lastLogin ? safeToLocaleString(u.lastLogin) : 'Never'}</td>
+                    <td className="px-4 py-3 text-sm">{safeToLocaleDateString(u.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

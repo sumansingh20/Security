@@ -6,7 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface Submission {
@@ -343,7 +343,7 @@ export default function TeacherResultsPage() {
                       </td>
                       <td>{sub.attemptNumber}</td>
                       <td className="font-mono" style={{ fontSize: '11px' }}>
-                        {format(new Date(sub.submittedAt), 'dd/MM/yyyy HH:mm')}
+                        {safeFormat(sub.submittedAt, 'dd/MM/yyyy HH:mm')}
                       </td>
                       <td>{formatTime(sub.timeTaken)}</td>
                       <td>
@@ -361,8 +361,8 @@ export default function TeacherResultsPage() {
                         {sub.totalViolations}
                       </td>
                       <td>
-                        <span className={`lms-status ${getStatusClass(sub.status)}`}>
-                          {sub.status.replace(/-/g, ' ').toUpperCase()}
+                        <span className={`lms-status ${getStatusClass(sub.status || 'pending')}`}>
+                          {(sub.status || 'pending').replace(/-/g, ' ').toUpperCase()}
                         </span>
                       </td>
                       <td>

@@ -18,7 +18,7 @@ import {
   Hash,
   Calendar,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 
 interface SubmissionDetail {
   _id: string;
@@ -178,7 +178,7 @@ export default function SubmissionDetailPage() {
                       question.questionType === 'numerical' ? 'bg-green-100 text-green-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
-                      {question.questionType.toUpperCase()}
+                      {(question.questionType || '').toUpperCase()}
                     </span>
                     {answer.markedForReview && (
                       <Flag className="w-4 h-4 text-purple-500 fill-purple-500" />
@@ -347,12 +347,12 @@ export default function SubmissionDetailPage() {
             <div className="card-body space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">Started</span>
-                <span>{format(new Date(submission.startTime), 'MMM d, HH:mm:ss')}</span>
+                <span>{safeFormat(submission.startTime, 'MMM d, HH:mm:ss')}</span>
               </div>
               {submission.submitTime && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">Submitted</span>
-                  <span>{format(new Date(submission.submitTime), 'MMM d, HH:mm:ss')}</span>
+                  <span>{safeFormat(submission.submitTime, 'MMM d, HH:mm:ss')}</span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm">
@@ -391,7 +391,7 @@ export default function SubmissionDetailPage() {
                           {violation.type.replace(/_/g, ' ')}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {format(new Date(violation.timestamp), 'HH:mm:ss')}
+                          {safeFormat(violation.timestamp, 'HH:mm:ss')}
                         </p>
                       </div>
                     </li>

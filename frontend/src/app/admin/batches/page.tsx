@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 
 interface Batch {
   _id: string;
@@ -250,9 +251,9 @@ export default function AdminBatchesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {batch.startTime ? (
                           <div>
-                            <div>{format(new Date(batch.startTime), 'MMM d, yyyy')}</div>
+                            <div>{safeFormat(batch.startTime, 'MMM d, yyyy')}</div>
                             <div className="text-xs">
-                              {format(new Date(batch.startTime), 'h:mm a')}
+                              {safeFormat(batch.startTime, 'h:mm a')}
                               {batch.endTime && ` - ${format(new Date(batch.endTime), 'h:mm a')}`}
                             </div>
                           </div>

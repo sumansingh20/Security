@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 type ExamStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'archived';
@@ -208,7 +209,7 @@ export default function TeacherExamsPage() {
       completed: { label: 'COMPLETED', className: 'lms-status-success' },
       archived: { label: 'LOCKED', className: 'lms-status-closed' },
     };
-    return displays[status] || { label: status.toUpperCase(), className: '' };
+    return displays[status] || { label: (status || 'unknown').toUpperCase(), className: '' };
   };
 
   const renderActions = (exam: Exam) => {
@@ -374,10 +375,10 @@ export default function TeacherExamsPage() {
               <tbody>
                 {activeExams.map((exam) => (
                   <tr key={exam._id} style={{ backgroundColor: 'rgba(34, 197, 94, 0.05)' }}>
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td>{exam.title}</td>
                     <td>{exam.subject}</td>
-                    <td className="font-mono">{format(new Date(exam.endTime), 'dd/MM/yyyy HH:mm')}</td>
+                    <td className="font-mono">{safeFormat(exam.endTime, 'dd/MM/yyyy HH:mm')}</td>
                     <td>{exam.submissionsCount || 0}</td>
                     <td>{renderActions(exam)}</td>
                   </tr>
@@ -421,7 +422,7 @@ export default function TeacherExamsPage() {
                   const statusDisplay = getStatusDisplay(exam.status);
                   return (
                     <tr key={exam._id}>
-                      <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                      <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                       <td>
                         <Link href={`/teacher/exams/${exam._id}`} style={{ color: 'var(--link-color)' }}>
                           {exam.title}
@@ -429,8 +430,8 @@ export default function TeacherExamsPage() {
                       </td>
                       <td>{exam.subject}</td>
                       <td>{exam.duration} min</td>
-                      <td className="font-mono">{format(new Date(exam.startTime), 'dd/MM/yy HH:mm')}</td>
-                      <td className="font-mono">{format(new Date(exam.endTime), 'dd/MM/yy HH:mm')}</td>
+                      <td className="font-mono">{safeFormat(exam.startTime, 'dd/MM/yy HH:mm')}</td>
+                      <td className="font-mono">{safeFormat(exam.endTime, 'dd/MM/yy HH:mm')}</td>
                       <td>{exam.questionsCount || 0}</td>
                       <td><span className={`lms-status ${statusDisplay.className}`}>{statusDisplay.label}</span></td>
                       <td>{renderActions(exam)}</td>

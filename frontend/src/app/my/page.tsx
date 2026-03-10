@@ -178,10 +178,10 @@ export default function StudentDashboard() {
               <tbody>
                 {activeExams.map((exam) => (
                   <tr key={exam._id} className="exam-row-highlight">
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td><strong>{exam.title}</strong></td>
                     <td>{exam.subject || '-'}</td>
-                    <td className="font-mono countdown-text">{format(new Date(exam.endTime), 'dd/MM HH:mm')}</td>
+                    <td className="font-mono countdown-text">{exam.endTime ? format(new Date(exam.endTime), 'dd/MM HH:mm') : '-'}</td>
                     <td>{exam.duration} min</td>
                     <td>
                       {exam.status === 'in-progress' ? (
@@ -237,11 +237,11 @@ export default function StudentDashboard() {
               <tbody>
                 {upcomingExams.map((exam) => (
                   <tr key={exam._id}>
-                    <td className="font-mono">{exam._id.slice(-8).toUpperCase()}</td>
+                    <td className="font-mono">{(exam._id || '').slice(-8).toUpperCase()}</td>
                     <td>{exam.title}</td>
                     <td>{exam.subject || '-'}</td>
-                    <td className="font-mono">{format(new Date(exam.startTime), 'dd/MM HH:mm')}</td>
-                    <td className="font-mono">{format(new Date(exam.endTime), 'dd/MM HH:mm')}</td>
+                    <td className="font-mono">{exam.startTime ? format(new Date(exam.startTime), 'dd/MM HH:mm') : '-'}</td>
+                    <td className="font-mono">{exam.endTime ? format(new Date(exam.endTime), 'dd/MM HH:mm') : '-'}</td>
                     <td>{exam.duration} min</td>
                     <td><span className="lms-status lms-status-pending">SCHEDULED</span></td>
                   </tr>

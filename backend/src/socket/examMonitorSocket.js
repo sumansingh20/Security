@@ -4,6 +4,33 @@ import Exam from '../models/Exam.js';
 import Violation from '../models/Violation.js';
 import User from '../models/User.js';
 
+// Map violation types to severity levels
+const getViolationSeverity = (type) => {
+  const severityMap = {
+    'tab-switch': 'medium', 'tab_switch': 'medium',
+    'window-blur': 'medium', 'window_blur': 'medium',
+    'copy-attempt': 'high', 'copy_attempt': 'high',
+    'paste-attempt': 'high', 'paste_attempt': 'high',
+    'right-click': 'low', 'right_click': 'low',
+    'devtools-open': 'critical', 'dev_tools': 'critical',
+    'multiple-tabs': 'high', 'multiple_tabs': 'high',
+    'screenshot-attempt': 'high',
+    'print-attempt': 'high',
+    'keyboard-shortcut': 'medium', 'blocked_shortcut': 'medium',
+    'fullscreen-exit': 'medium',
+    'failed_login': 'high',
+    'ip_change': 'critical',
+    'browser_change': 'critical',
+    'fingerprint_mismatch': 'critical',
+    'connection_lost': 'low',
+    'inactivity': 'low',
+    'navigation': 'medium', 'navigation_attempt': 'medium',
+    'multiple_login': 'critical',
+    'other': 'low',
+  };
+  return severityMap[type] || 'medium';
+};
+
 export const setupExamSocket = (io) => {
   // Namespace for exam monitoring (teachers/admins)
   const monitorNamespace = io.of('/exam-monitor');
@@ -197,6 +224,7 @@ export const setupExamSocket = (io) => {
           student: session.student,
           submission: session._id,
           type,
+          severity: getViolationSeverity(type),
           description: details,
           ipAddress: socket.handshake.address,
           timestamp: new Date(),

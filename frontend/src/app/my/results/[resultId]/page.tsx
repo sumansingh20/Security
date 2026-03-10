@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface ResultData {
@@ -183,8 +183,8 @@ export default function ResultDetailPage() {
                   <tr><td style={{ width: '180px', fontWeight: 'bold' }}>Examination</td><td>{result.examTitle}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Subject</td><td>{result.subject || '—'}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Attempt</td><td>#{result.attemptNumber}</td></tr>
-                  <tr><td style={{ fontWeight: 'bold' }}>Started</td><td className="font-mono">{format(new Date(result.startedAt), 'dd MMM yyyy HH:mm:ss')}</td></tr>
-                  <tr><td style={{ fontWeight: 'bold' }}>Submitted</td><td className="font-mono">{format(new Date(result.submittedAt), 'dd MMM yyyy HH:mm:ss')}</td></tr>
+                  <tr><td style={{ fontWeight: 'bold' }}>Started</td><td className="font-mono">{safeFormat(result.startedAt, 'dd MMM yyyy HH:mm:ss')}</td></tr>
+                  <tr><td style={{ fontWeight: 'bold' }}>Submitted</td><td className="font-mono">{safeFormat(result.submittedAt, 'dd MMM yyyy HH:mm:ss')}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Time Taken</td><td>{formatTime(result.timeTaken)}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Submission Type</td><td>{
                     result.submissionType === 'auto-timeout' ? 'Auto-submit (timer expired)' :

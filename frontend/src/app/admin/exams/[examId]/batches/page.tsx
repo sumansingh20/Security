@@ -6,6 +6,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { format } from 'date-fns';
+import { safeFormat } from '@/lib/dateUtils';
 import toast from 'react-hot-toast';
 
 interface Batch {
@@ -122,7 +123,7 @@ export default function BatchesPage() {
       completed: { label: 'COMPLETED', className: 'lms-status-success' },
       locked: { label: 'LOCKED', className: 'lms-status-closed' },
     };
-    return statusMap[batch.status] || { label: batch.status.toUpperCase(), className: '' };
+    return statusMap[batch.status] || { label: (batch.status || '').toUpperCase(), className: '' };
   };
 
   const getProgress = (batch: Batch) => {
@@ -274,10 +275,10 @@ export default function BatchesPage() {
                         {batch.totalViolations}
                       </td>
                       <td className="font-mono" style={{ fontSize: '11px' }}>
-                        {format(new Date(batch.scheduledStart), 'dd/MM HH:mm')}
+                        {safeFormat(batch.scheduledStart, 'dd/MM HH:mm')}
                       </td>
                       <td className="font-mono" style={{ fontSize: '11px' }}>
-                        {format(new Date(batch.scheduledEnd), 'dd/MM HH:mm')}
+                        {safeFormat(batch.scheduledEnd, 'dd/MM HH:mm')}
                       </td>
                       <td>
                         <span className={`lms-status ${statusDisplay.className}`}>
