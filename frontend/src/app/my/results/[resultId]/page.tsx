@@ -16,8 +16,10 @@ interface ResultData {
   duration: number;
   marksObtained: number;
   totalMarks: number;
+  examTotalMarks: number;
   percentage: number;
   passingMarks: number;
+  passingPercentage: number;
   passed: boolean;
   failReason?: string;
   attemptNumber: number;
@@ -232,7 +234,7 @@ export default function ResultDetailPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      left: `${(result.passingMarks / result.totalMarks) * 100}%`,
+                      left: `${Math.min(result.passingPercentage || 0, 100)}%`,
                       top: 0,
                       bottom: 0,
                       width: '2px',
@@ -242,7 +244,7 @@ export default function ResultDetailPage() {
                   />
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Passing mark: {result.passingMarks} ({Math.round((result.passingMarks / result.totalMarks) * 100)}%)
+                  Passing: {Math.round(result.passingPercentage || 0)}%
                 </div>
               </div>
 
