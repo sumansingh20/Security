@@ -160,7 +160,7 @@ export const questionSchemas = {
       Joi.string().allow(''),
       Joi.number(),
       Joi.array().items(Joi.string())
-    ).default(null),
+    ).allow(null).default(null),
     answerTolerance: Joi.number().min(0).default(0),
     matchPairs: Joi.array().items(
       Joi.object({

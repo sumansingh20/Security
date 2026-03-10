@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LMSLayout from '@/components/layouts/LMSLayout';
@@ -76,6 +76,26 @@ export default function TeacherAddQuestionPage() {
   const [loading, setLoading] = useState(false);
   const [addAnother, setAddAnother] = useState(true);
   const [tagInput, setTagInput] = useState('');
+  const [examStatus, setExamStatus] = useState<string>('draft');
+  const [examTitle, setExamTitle] = useState<string>('');
+  const [pageLoading, setPageLoading] = useState(true);
+
+  // Fetch exam info to check if it's in draft status
+  useEffect(() => {
+    const fetchExam = async () => {
+      try {
+        const res = await api.get(`${rolePrefix}/exams/${examId}`);
+        const examData = res.data.data?.exam || res.data.data;
+        setExamStatus(examData?.status || 'draft');
+        setExamTitle(examData?.title || '');
+      } catch (err: any) {
+        toast.error('Failed to load exam info');
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    if (isAuthenticated && (user?.role === 'admin' || user?.role === 'teacher')) fetchExam();
+  }, [examId, rolePrefix, isAuthenticated, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -213,8 +233,8 @@ export default function TeacherAddQuestionPage() {
     }
     if (type === 'fill-blank' || type === 'short-answer') base.correctAnswer = question.correctAnswer;
     if (type === 'numerical') { base.correctAnswer = Number(question.correctAnswer); base.answerTolerance = question.answerTolerance; }
-    if (type === 'long-answer') base.correctAnswer = question.correctAnswer || null;
-    if (type === 'code') { base.correctAnswer = question.correctAnswer || null; base.codeLanguage = question.codeLanguage; }
+    if (type === 'long-answer') base.correctAnswer = question.correctAnswer || '';
+    if (type === 'code') { base.correctAnswer = question.correctAnswer || ''; base.codeLanguage = question.codeLanguage; }
     if (type === 'matching') base.matchPairs = question.matchPairs.filter(p => p.left.trim() && p.right.trim());
     if (type === 'ordering') base.correctOrder = question.correctOrder.filter(s => s.trim());
     if (type === 'image-based') {
@@ -232,6 +252,10 @@ export default function TeacherAddQuestionPage() {
 
   const handleSubmit = async (e: React.FormEvent, another = false) => {
     e.preventDefault();
+    if (examStatus !== 'draft') {
+      toast.error('Cannot add questions — exam is not in draft status');
+      return;
+    }
     const err = validateForm();
     if (err) { toast.error(err); return; }
     setLoading(true);
@@ -249,7 +273,15 @@ export default function TeacherAddQuestionPage() {
         setTimeout(() => router.push(`${rolePrefix}/exams/${examId}/questions`), 800);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to add question');
+      const data = err.response?.data;
+      let msg = data?.error || data?.message || 'Failed to add question';
+      // If validation errors, show first field error
+      if (data?.details?.errors && Array.isArray(data.details.errors)) {
+        const fieldErr = data.details.errors[0];
+        msg = fieldErr?.message || msg;
+      }
+      toast.error(msg);
+      console.error('Add question error:', err.response?.status, data);
     } finally {
       setLoading(false);
     }
@@ -437,6 +469,30 @@ export default function TeacherAddQuestionPage() {
   };
 
   if (!isAuthenticated || (user?.role !== 'admin' && user?.role !== 'teacher')) return null;
+
+  if (pageLoading) {
+    return (
+      <LMSLayout pageTitle="Add Question">
+        <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+      </LMSLayout>
+    );
+  }
+
+  if (examStatus !== 'draft') {
+    return (
+      <LMSLayout pageTitle="Add Question">
+        <div style={{ maxWidth: 600, margin: '40px auto', textAlign: 'center' }}>
+          <div className="lms-card" style={{ padding: 32 }}>
+            <p style={{ fontSize: 18, fontWeight: 600, color: '#dc2626', marginBottom: 12 }}>Cannot Add Questions</p>
+            <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>
+              This exam is in <strong>{examStatus}</strong> status. Questions can only be added to exams in <strong>draft</strong> status.
+            </p>
+            <Link href={`${rolePrefix}/exams/${examId}/questions`} className="lms-btn lms-btn-primary" style={{ textDecoration: 'none' }}>Back to Questions</Link>
+          </div>
+        </div>
+      </LMSLayout>
+    );
+  }
 
   return (
     <LMSLayout

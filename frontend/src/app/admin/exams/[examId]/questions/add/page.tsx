@@ -225,8 +225,8 @@ export default function AddQuestionPage() {
     }
     if (type === 'fill-blank' || type === 'short-answer') base.correctAnswer = question.correctAnswer;
     if (type === 'numerical') { base.correctAnswer = Number(question.correctAnswer); base.answerTolerance = question.answerTolerance; }
-    if (type === 'long-answer') base.correctAnswer = question.correctAnswer || null;
-    if (type === 'code') { base.correctAnswer = question.correctAnswer || null; base.codeLanguage = question.codeLanguage; }
+    if (type === 'long-answer') base.correctAnswer = question.correctAnswer || '';
+    if (type === 'code') { base.correctAnswer = question.correctAnswer || ''; base.codeLanguage = question.codeLanguage; }
     if (type === 'matching') base.matchPairs = question.matchPairs.filter(p => p.left.trim() && p.right.trim());
     if (type === 'ordering') base.correctOrder = question.correctOrder.filter(s => s.trim());
     if (type === 'image-based') {

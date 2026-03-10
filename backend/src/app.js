@@ -361,6 +361,7 @@ app.use((err, req, res, next) => {
   }
 
   return errorJson(res, status, message, {
+    errors: err.errors || undefined,
     stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined,
   });
 });
