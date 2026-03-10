@@ -41,7 +41,7 @@ const STATUS_ACTIONS: Record<ExamStatus, {
   canViewResults: boolean;
 }> = {
   draft: { canEdit: true, canAddQuestions: true, canPublish: true, canActivate: false, canComplete: false, canLock: false, canDelete: true, canViewResults: false },
-  published: { canEdit: false, canAddQuestions: false, canPublish: false, canActivate: true, canComplete: false, canLock: false, canDelete: false, canViewResults: false },
+  published: { canEdit: false, canAddQuestions: true, canPublish: false, canActivate: true, canComplete: false, canLock: false, canDelete: false, canViewResults: false },
   ongoing: { canEdit: false, canAddQuestions: false, canPublish: false, canActivate: false, canComplete: true, canLock: false, canDelete: false, canViewResults: false },
   completed: { canEdit: false, canAddQuestions: false, canPublish: false, canActivate: false, canComplete: false, canLock: true, canDelete: false, canViewResults: true },
   archived: { canEdit: false, canAddQuestions: false, canPublish: false, canActivate: false, canComplete: false, canLock: false, canDelete: false, canViewResults: true },
@@ -171,7 +171,7 @@ export default function TeacherExamsPage() {
       publish: {
         title: 'Publish Examination',
         message: `Are you sure you want to publish "${examForAction.title}"?`,
-        warning: 'This will LOCK the exam configuration. You will NOT be able to edit questions, duration, or timing after publishing.',
+        warning: 'This will LOCK exam settings (duration, timing). You can still add or manage questions after publishing.',
       },
       activate: {
         title: 'Activate Examination',

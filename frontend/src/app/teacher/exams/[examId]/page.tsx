@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<string, {
   canComplete: boolean;
 }> = {
   draft: { label: 'DRAFT', class: '', canEdit: true, canAddQuestions: true, canPublish: true, canActivate: false, canComplete: false },
-  published: { label: 'PUBLISHED', class: 'lms-status-info', canEdit: false, canAddQuestions: false, canPublish: false, canActivate: true, canComplete: false },
+  published: { label: 'PUBLISHED', class: 'lms-status-info', canEdit: false, canAddQuestions: true, canPublish: false, canActivate: true, canComplete: false },
   ongoing: { label: 'ACTIVE', class: 'lms-status-active', canEdit: false, canAddQuestions: false, canPublish: false, canActivate: false, canComplete: true },
   completed: { label: 'COMPLETED', class: 'lms-status-success', canEdit: false, canAddQuestions: false, canPublish: false, canActivate: false, canComplete: false },
   archived: { label: 'LOCKED', class: 'lms-status-closed', canEdit: false, canAddQuestions: false, canPublish: false, canActivate: false, canComplete: false },
@@ -168,7 +168,7 @@ export default function TeacherExamDetailPage() {
       publish: {
         title: 'Publish Examination',
         message: `Are you sure you want to publish "${exam.title}"?`,
-        warning: 'This will LOCK the exam configuration. You will NOT be able to edit questions, duration, or timing after publishing.',
+        warning: 'This will LOCK exam settings (duration, timing). You can still add or manage questions after publishing.',
       },
       activate: {
         title: 'Activate Examination',
@@ -269,9 +269,14 @@ export default function TeacherExamDetailPage() {
       </div>
 
       {/* Read-Only Warning */}
-      {!statusConfig.canEdit && (
+      {!statusConfig.canEdit && !statusConfig.canAddQuestions && (
         <div className="lms-alert lms-alert-warning mb-4">
           <strong>Read Only:</strong> This examination cannot be modified in its current state ({statusConfig.label}).
+        </div>
+      )}
+      {!statusConfig.canEdit && statusConfig.canAddQuestions && (
+        <div className="lms-alert lms-alert-info mb-4">
+          <strong>Published:</strong> Exam settings are locked, but you can still add or manage questions.
         </div>
       )}
 

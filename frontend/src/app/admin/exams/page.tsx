@@ -53,7 +53,7 @@ const STATUS_ACTIONS: Record<ExamStatus, {
   },
   published: {
     canEdit: false,
-    canAddQuestions: false,
+    canAddQuestions: true,
     canPublish: false,
     canActivate: true,
     canComplete: false,
@@ -229,7 +229,7 @@ export default function AdminExamsPage() {
       publish: {
         title: 'Publish Examination',
         message: `Are you sure you want to publish "${examForAction.title}"?`,
-        warning: 'This will LOCK the exam configuration. You will NOT be able to edit questions, duration, or timing after publishing.',
+        warning: 'This will LOCK exam settings (duration, timing). You can still add or manage questions after publishing.',
       },
       activate: {
         title: 'Activate Examination',
