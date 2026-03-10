@@ -18,7 +18,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://security-api-new-nu.vercel.app/api/:path*"
+      "destination": "https://security-api-new.vercel.app/api/:path*"
     }
   ]
 }
