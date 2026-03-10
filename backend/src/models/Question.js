@@ -279,7 +279,18 @@ questionSchema.methods.checkAnswer = function(answer) {
 
   switch (this.questionType) {
     case 'mcq-single':
-    case 'true-false': {
+    case 'true-false':
+    case 'image-based': {
+      // image-based with options is graded like mcq-single
+      // image-based without options falls through to short-answer style (handled by correctAnswer check below)
+      if (this.questionType === 'image-based' && (!this.correctOptions || this.correctOptions.length === 0)) {
+        // Text answer for image-based without options
+        if (this.correctAnswer) {
+          const isCorrect = String(answer).trim().toLowerCase() === String(this.correctAnswer).trim().toLowerCase();
+          return isCorrect ? this.marks : 0;
+        }
+        return null; // manual grading needed
+      }
       const correctSet = new Set(this.correctOptions.map(id => id.toString()));
       const selectedOptions = Array.isArray(answer) ? answer : [answer];
       const selectedSet = new Set(selectedOptions.map(id => id.toString()));

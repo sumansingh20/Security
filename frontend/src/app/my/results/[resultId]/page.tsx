@@ -327,7 +327,7 @@ export default function ResultDetailPage() {
 
                     {/* Options */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {q.options.map((opt, oi) => {
+                      {(q.options || []).map((opt, oi) => {
                         const isSelected = studentAnswerIds.includes(opt._id);
                         const isCorrectOption = result.showCorrectAnswers && opt.isCorrect;
 

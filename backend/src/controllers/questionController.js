@@ -27,7 +27,7 @@ export const createQuestion = async (req, res, next) => {
     let correctOptionIds = [];
 
     // Process based on question type
-    if (['mcq-single', 'mcq-multiple', 'true-false'].includes(questionType)) {
+    if (['mcq-single', 'mcq-multiple', 'true-false', 'image-based'].includes(questionType)) {
       // Create option objects with IDs for MCQ types
       if (options && options.length > 0) {
         processedOptions = options.map(opt => ({

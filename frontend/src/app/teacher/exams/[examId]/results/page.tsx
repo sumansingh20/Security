@@ -222,12 +222,12 @@ export default function TeacherResultsPage() {
             <div className="lms-stat-label">Total Submissions</div>
           </div>
           <div className="lms-stat">
-            <div className="lms-stat-value">{analytics.averageScore.toFixed(1)}%</div>
+            <div className="lms-stat-value">{(analytics.averageScore ?? 0).toFixed(1)}%</div>
             <div className="lms-stat-label">Average Score</div>
           </div>
           <div className="lms-stat">
-            <div className="lms-stat-value" style={{ color: analytics.passRate >= 50 ? 'var(--success)' : 'var(--error)' }}>
-              {analytics.passRate.toFixed(1)}%
+            <div className="lms-stat-value" style={{ color: (analytics.passRate ?? 0) >= 50 ? 'var(--success)' : 'var(--error)' }}>
+              {(analytics.passRate ?? 0).toFixed(1)}%
             </div>
             <div className="lms-stat-label">Pass Rate</div>
           </div>
@@ -350,8 +350,8 @@ export default function TeacherResultsPage() {
                       <td>
                         <strong>{sub.marksObtained}</strong> / {sub.totalMarks}
                       </td>
-                      <td style={{ color: sub.percentage >= 60 ? 'var(--success)' : sub.percentage >= 40 ? 'var(--warning)' : 'var(--error)' }}>
-                        {sub.percentage.toFixed(1)}%
+                      <td style={{ color: (sub.percentage ?? 0) >= 60 ? 'var(--success)' : (sub.percentage ?? 0) >= 40 ? 'var(--warning)' : 'var(--error)' }}>
+                        {(sub.percentage ?? 0).toFixed(1)}%
                       </td>
                       <td>
                         <span className={`lms-status ${passed ? 'lms-status-success' : 'lms-status-draft'}`}>
