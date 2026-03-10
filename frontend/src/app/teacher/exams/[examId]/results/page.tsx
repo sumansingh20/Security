@@ -41,6 +41,7 @@ interface ExamInfo {
   totalMarks: number;
   passingMarks: number;
   duration: number;
+  maxViolationsBeforeSubmit?: number;
 }
 
 interface Analytics {
@@ -331,8 +332,9 @@ export default function TeacherResultsPage() {
               </thead>
               <tbody>
                 {submissions.map((sub) => {
-                  const violationFailed = sub.totalViolations >= 10;
-                  const passed = !violationFailed && exam && sub.marksObtained >= exam.passingMarks;
+                  const violationFailed = sub.totalViolations >= (exam?.maxViolationsBeforeSubmit || 10);
+                  const passingPercentage = exam && exam.totalMarks > 0 ? (exam.passingMarks / exam.totalMarks) * 100 : 0;
+                  const passed = !violationFailed && (sub.percentage ?? 0) >= passingPercentage;
                   return (
                     <tr key={sub._id}>
                       <td className="font-mono">{sub.student?.rollNumber || '-'}</td>

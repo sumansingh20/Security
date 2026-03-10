@@ -641,7 +641,9 @@ export const getStudentResults = async (req, res, next) => {
       .map(s => {
       // 10+ violations = direct fail regardless of marks
       const violationFailed = (s.totalViolations || 0) >= (s.exam.maxViolationsBeforeSubmit || 10);
-      const marksPassed = s.marksObtained >= s.exam.passingMarks;
+      // Use percentage-based pass check: passingMarks is relative to exam totalMarks
+      const passingPercentage = s.exam.totalMarks > 0 ? (s.exam.passingMarks / s.exam.totalMarks) * 100 : 0;
+      const marksPassed = (s.percentage || 0) >= passingPercentage;
       return {
       id: s._id,
       examId: s.exam._id,
@@ -723,7 +725,9 @@ export const getResultDetails = async (req, res, next) => {
 
     // Build response
     const violationFailed = (submission.totalViolations || 0) >= (exam.maxViolationsBeforeSubmit || 10);
-    const marksPassed = submission.marksObtained >= exam.passingMarks;
+    // Use percentage-based pass check: passingMarks is relative to exam totalMarks
+    const passingPercentage = exam.totalMarks > 0 ? (exam.passingMarks / exam.totalMarks) * 100 : 0;
+    const marksPassed = (submission.percentage || 0) >= passingPercentage;
     const passed = !violationFailed && marksPassed;
 
     const result = {

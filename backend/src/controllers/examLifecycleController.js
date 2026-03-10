@@ -593,16 +593,18 @@ export const getExamResults = async (req, res, next) => {
     }
 
     // Calculate statistics (10+ violations = fail regardless of marks)
-    const allSubs = await Submission.find({ exam: exam._id }).select('marksObtained totalViolations');
+    const allSubs = await Submission.find({ exam: exam._id }).select('marksObtained totalMarks totalViolations percentage');
     const maxViol = exam.maxViolationsBeforeSubmit || 10;
+    // Use percentage-based pass check: passingMarks is relative to exam totalMarks
+    const passingPercentage = exam.totalMarks > 0 ? (exam.passingMarks / exam.totalMarks) * 100 : 0;
     
     const stats = {
       totalSubmissions: allSubs.length,
       average: allSubs.length > 0 ? (allSubs.reduce((a, s) => a + (s.marksObtained || 0), 0) / allSubs.length).toFixed(2) : 0,
       highest: allSubs.length > 0 ? Math.max(...allSubs.map(s => s.marksObtained || 0)) : 0,
       lowest: allSubs.length > 0 ? Math.min(...allSubs.map(s => s.marksObtained || 0)) : 0,
-      passed: allSubs.filter(s => (s.marksObtained || 0) >= exam.passingMarks && (s.totalViolations || 0) < maxViol).length,
-      failed: allSubs.filter(s => (s.marksObtained || 0) < exam.passingMarks || (s.totalViolations || 0) >= maxViol).length,
+      passed: allSubs.filter(s => (s.percentage || 0) >= passingPercentage && (s.totalViolations || 0) < maxViol).length,
+      failed: allSubs.filter(s => (s.percentage || 0) < passingPercentage || (s.totalViolations || 0) >= maxViol).length,
     };
 
     res.json({

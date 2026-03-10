@@ -88,7 +88,11 @@ export default function TeacherSubmissionDetailPage() {
   }
 
   const studentName = submission.student?.name || `${submission.student?.firstName || ''} ${submission.student?.lastName || ''}`.trim() || submission.student?.email;
-  const isPassed = submission.isPassed ?? (submission.percentage >= 40);
+  // Use percentage-based pass check: if passingMarks configured, convert to percentage of totalMarks
+  const passingPercentage = (submission.exam?.totalMarks && submission.exam?.passingMarks)
+    ? (submission.exam.passingMarks / submission.exam.totalMarks) * 100
+    : 40;
+  const isPassed = submission.isPassed ?? ((submission.percentage ?? 0) >= passingPercentage);
 
   return (
     <LMSLayout

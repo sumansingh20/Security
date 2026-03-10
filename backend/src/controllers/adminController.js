@@ -902,7 +902,14 @@ export const getSubmissionById = async (req, res, next) => {
         timestamp: v.timestamp,
         details: v.description,
       })),
-      isPassed: submission.marksObtained >= (submission.exam.passingMarks || 0),
+      isPassed: (() => {
+        const totalMarksFromQuestions = submission.totalMarks || submission.exam.totalMarks || 0;
+        const passingMarks = submission.exam.passingMarks || 0;
+        if (totalMarksFromQuestions <= 0) return false;
+        // Use percentage-based comparison: convert passingMarks to percentage of exam totalMarks
+        const passingPercentage = submission.exam.totalMarks > 0 ? (passingMarks / submission.exam.totalMarks) * 100 : 0;
+        return (submission.percentage || 0) >= passingPercentage;
+      })(),
       attemptNumber: submission.attemptNumber || 1,
     };
 
