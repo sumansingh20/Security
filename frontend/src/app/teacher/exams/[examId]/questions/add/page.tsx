@@ -252,8 +252,8 @@ export default function TeacherAddQuestionPage() {
 
   const handleSubmit = async (e: React.FormEvent, another = false) => {
     e.preventDefault();
-    if (examStatus !== 'draft') {
-      toast.error('Cannot add questions — exam is not in draft status');
+    if (!['draft', 'published'].includes(examStatus)) {
+      toast.error('Cannot add questions — exam is ongoing or completed');
       return;
     }
     const err = validateForm();
@@ -478,14 +478,14 @@ export default function TeacherAddQuestionPage() {
     );
   }
 
-  if (examStatus !== 'draft') {
+  if (!['draft', 'published'].includes(examStatus)) {
     return (
       <LMSLayout pageTitle="Add Question">
         <div style={{ maxWidth: 600, margin: '40px auto', textAlign: 'center' }}>
           <div className="lms-card" style={{ padding: 32 }}>
             <p style={{ fontSize: 18, fontWeight: 600, color: '#dc2626', marginBottom: 12 }}>Cannot Add Questions</p>
             <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>
-              This exam is in <strong>{examStatus}</strong> status. Questions can only be added to exams in <strong>draft</strong> status.
+              This exam is in <strong>{examStatus}</strong> status. Questions can only be added when the exam is in <strong>draft</strong> or <strong>published</strong> status.
             </p>
             <Link href={`${rolePrefix}/exams/${examId}/questions`} className="lms-btn lms-btn-primary" style={{ textDecoration: 'none' }}>Back to Questions</Link>
           </div>

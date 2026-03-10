@@ -12,8 +12,8 @@ export const createQuestion = async (req, res, next) => {
       throw new AppError('Exam not found', 404);
     }
 
-    if (exam.status !== 'draft') {
-      throw new AppError('Cannot add questions to a published exam', 400);
+    if (!['draft', 'published'].includes(exam.status)) {
+      throw new AppError('Cannot add questions to an active/completed exam', 400);
     }
 
     // Get next question number
@@ -149,8 +149,8 @@ export const updateQuestion = async (req, res, next) => {
       throw new AppError('Question not found', 404);
     }
 
-    if (question.exam.status !== 'draft') {
-      throw new AppError('Cannot edit questions of a published exam', 400);
+    if (!['draft', 'published'].includes(question.exam.status)) {
+      throw new AppError('Cannot edit questions of an active/completed exam', 400);
     }
 
     const { options, correctOptions, ...rest } = req.body;
@@ -210,8 +210,8 @@ export const deleteQuestion = async (req, res, next) => {
       throw new AppError('Question not found', 404);
     }
 
-    if (question.exam.status !== 'draft') {
-      throw new AppError('Cannot delete questions from a published exam', 400);
+    if (!['draft', 'published'].includes(question.exam.status)) {
+      throw new AppError('Cannot delete questions from an active/completed exam', 400);
     }
 
     const examId = question.exam._id;
@@ -255,8 +255,8 @@ export const bulkCreateQuestions = async (req, res, next) => {
       throw new AppError('Exam not found', 404);
     }
 
-    if (exam.status !== 'draft') {
-      throw new AppError('Cannot add questions to a published exam', 400);
+    if (!['draft', 'published'].includes(exam.status)) {
+      throw new AppError('Cannot add questions to an active/completed exam', 400);
     }
 
     const { questions } = req.body;
@@ -316,8 +316,8 @@ export const reorderQuestions = async (req, res, next) => {
       throw new AppError('Exam not found', 404);
     }
 
-    if (exam.status !== 'draft') {
-      throw new AppError('Cannot reorder questions of a published exam', 400);
+    if (!['draft', 'published'].includes(exam.status)) {
+      throw new AppError('Cannot reorder questions of an active/completed exam', 400);
     }
 
     const { order } = req.body; // Array of question IDs in new order
@@ -411,8 +411,8 @@ export const generateQuestions = async (req, res, next) => {
       throw new AppError('Exam not found', 404);
     }
 
-    if (exam.status !== 'draft') {
-      throw new AppError('Cannot add questions to a published exam', 400);
+    if (!['draft', 'published'].includes(exam.status)) {
+      throw new AppError('Cannot add questions to an active/completed exam', 400);
     }
 
     const { 
@@ -833,8 +833,8 @@ export const importQuestions = async (req, res, next) => {
       throw new AppError('Exam not found', 404);
     }
 
-    if (exam.status !== 'draft') {
-      throw new AppError('Cannot add questions to a published exam', 400);
+    if (!['draft', 'published'].includes(exam.status)) {
+      throw new AppError('Cannot add questions to an active/completed exam', 400);
     }
 
     const { questions: importedQuestions, format = 'json' } = req.body;
@@ -936,7 +936,7 @@ export const duplicateQuestion = async (req, res, next) => {
     }
 
     const exam = await Exam.findById(originalQuestion.exam);
-    if (!exam || exam.status !== 'draft') {
+    if (!exam || !['draft', 'published'].includes(exam.status)) {
       throw new AppError('Cannot duplicate question for this exam', 400);
     }
 

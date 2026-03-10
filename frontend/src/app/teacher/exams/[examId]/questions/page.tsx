@@ -114,7 +114,7 @@ export default function TeacherExamQuestionsPage() {
     );
   }
 
-  const isDraft = exam?.status === 'draft';
+  const canEdit = ['draft', 'published'].includes(exam?.status || '');
   const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
 
   return (
@@ -137,7 +137,7 @@ export default function TeacherExamQuestionsPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {isDraft && (
+            {canEdit && (
               <Link
                 href={`${rolePrefix}/exams/${examId}/questions/add`}
                 className="lms-btn lms-btn-primary"
@@ -150,9 +150,9 @@ export default function TeacherExamQuestionsPage() {
           </div>
         </div>
 
-        {!isDraft && (
+        {!canEdit && (
           <div className="lms-alert lms-alert-warning" style={{ marginBottom: 16 }}>
-            <strong>Read Only:</strong> Questions cannot be modified. Examination is not in draft status.
+            <strong>Read Only:</strong> Questions cannot be modified. Examination is ongoing or completed.
           </div>
         )}
 
@@ -172,7 +172,7 @@ export default function TeacherExamQuestionsPage() {
         {questions.length === 0 ? (
           <div className="lms-card" style={{ padding: 48, textAlign: 'center' }}>
             <p style={{ fontSize: 16, color: 'var(--text-muted)', marginBottom: 16 }}>No questions added yet.</p>
-            {isDraft && (
+            {canEdit && (
               <Link
                 href={`${rolePrefix}/exams/${examId}/questions/add`}
                 className="lms-btn lms-btn-primary"
@@ -221,7 +221,7 @@ export default function TeacherExamQuestionsPage() {
                         </div>
                       )}
                     </div>
-                    {isDraft && (
+                    {canEdit && (
                       <div style={{ display: 'flex', gap: 6, marginLeft: 12, flexShrink: 0 }}>
                         <button
                           onClick={() => handleDelete(q._id)}

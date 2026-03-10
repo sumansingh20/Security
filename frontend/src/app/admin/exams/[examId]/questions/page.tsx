@@ -113,7 +113,7 @@ export default function AdminExamQuestionsPage() {
     );
   }
 
-  const isDraft = exam?.status === 'draft';
+  const isDraft = ['draft', 'published'].includes(exam?.status || '');
   const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
 
   return (
