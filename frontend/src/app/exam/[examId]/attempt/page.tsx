@@ -13,7 +13,8 @@ interface Question {
   options?: { text: string; _id?: string }[];
   marks: number;
   imageUrl?: string;
-  matchPairs?: { left: string; right: string }[];
+  matchPairs?: { left: string; right?: string }[];
+  matchRightOptions?: string[];
   orderItems?: string[];
   codeLanguage?: string;
   answerTolerance?: number;
@@ -74,24 +75,34 @@ export default function ExamAttemptPage() {
   useEffect(() => { sessionTokenRef.current = sessionToken; }, [sessionToken]);
   useEffect(() => { fingerprintRef.current = fingerprint; }, [fingerprint]);
 
-  // Get browser fingerprint
+  // Get browser fingerprint with timeout to prevent stuck loading
   useEffect(() => {
+    let cancelled = false;
     const getFingerprint = async () => {
+      const generateFallback = () => {
+        const fallback = `${navigator.userAgent}-${screen.width}x${screen.height}-${new Date().getTimezoneOffset()}`;
+        return btoa(fallback).substring(0, 32);
+      };
       try {
-        const fp = await FingerprintJS.load();
-        const result = await fp.get();
-        setFingerprint(result.visitorId);
-        fingerprintRef.current = result.visitorId;
+        // Race between FingerprintJS and a timeout
+        const fpPromise = FingerprintJS.load().then(fp => fp.get());
+        const timeoutPromise = new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Fingerprint timeout')), 5000));
+        const result = await Promise.race([fpPromise, timeoutPromise]) as any;
+        if (!cancelled) {
+          setFingerprint(result.visitorId);
+          fingerprintRef.current = result.visitorId;
+        }
       } catch (err) {
         console.error('Fingerprint error:', err);
-        // Generate fallback fingerprint
-        const fallback = `${navigator.userAgent}-${screen.width}x${screen.height}-${new Date().getTimezoneOffset()}`;
-        const fp = btoa(fallback).substring(0, 32);
-        setFingerprint(fp);
-        fingerprintRef.current = fp;
+        if (!cancelled) {
+          const fp = generateFallback();
+          setFingerprint(fp);
+          fingerprintRef.current = fp;
+        }
       }
     };
     getFingerprint();
+    return () => { cancelled = true; };
   }, []);
 
   // Load session from storage or validate existing
@@ -109,19 +120,32 @@ export default function ExamAttemptPage() {
     }
   }, [examId, fingerprint]);
 
-  // Load exam session data
-  const loadExamSession = async (token: string) => {
+  // Load exam session data with retry
+  const loadExamSession = async (token: string, retryCount = 0) => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(`${API_URL}/exam-engine/session/${token}`, {
         headers: {
           'x-browser-fingerprint': fingerprintRef.current || fingerprint || '',
         },
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const text = await response.text();
         let data;
         try { data = JSON.parse(text); } catch { data = { reason: `Server error (${response.status})` }; }
+        
+        // Retry on server errors (5xx)
+        if (response.status >= 500 && retryCount < 2) {
+          console.log(`Retrying session load (attempt ${retryCount + 2})...`);
+          await new Promise(r => setTimeout(r, 2000 * (retryCount + 1)));
+          return loadExamSession(token, retryCount + 1);
+        }
+        
         setError(data?.reason || data?.error || `Server error (${response.status})`);
         setLoading(false);
         return;
@@ -157,9 +181,15 @@ export default function ExamAttemptPage() {
 
       setLoading(false);
       startTimerAndHeartbeat(data.session.remainingTime);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Load session error:', err);
-      setError('Failed to connect to exam server');
+      // Retry on network errors
+      if (retryCount < 2 && (err.name === 'AbortError' || err.name === 'TypeError' || !navigator.onLine)) {
+        console.log(`Retrying session load after network error (attempt ${retryCount + 2})...`);
+        await new Promise(r => setTimeout(r, 2000 * (retryCount + 1)));
+        return loadExamSession(token, retryCount + 1);
+      }
+      setError('Failed to connect to exam server. Please check your internet connection and try again.');
       setLoading(false);
     }
   };
@@ -550,15 +580,32 @@ export default function ExamAttemptPage() {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md">
-          <div className="text-red-500 text-6xl mb-4"></div>
+          <div className="text-red-500 text-6xl mb-4">⚠</div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Session Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/my/exams')}
-            className="bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800"
-          >
-            Back to Exams
-          </button>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                const storedToken = sessionStorage.getItem(`exam_session_${examId}`);
+                if (storedToken) {
+                  loadExamSession(storedToken);
+                } else {
+                  router.push('/exam/login');
+                }
+              }}
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => router.push('/exam/login')}
+              className="bg-blue-900 text-white px-6 py-2 rounded hover:bg-blue-800"
+            >
+              Back to Login
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -888,7 +935,7 @@ export default function ExamAttemptPage() {
                       <p className="text-sm text-gray-500 mb-3">Match each item on the left with the correct item on the right:</p>
                       {currentQ.matchPairs.map((pair, pairIndex) => {
                         const currentMatchAnswers = answers.get(currentQ.id)?.matchAnswers || [];
-                        const rightOptions = currentQ.matchPairs!.map(p => p.right);
+                        const rightOptions = currentQ.matchRightOptions || currentQ.matchPairs!.map(p => p.right || '').filter(Boolean);
                         return (
                           <div key={pairIndex} className="flex items-center gap-4 mb-3 p-3 bg-gray-50 rounded-lg">
                             <span className="font-medium text-gray-900 flex-1">{pair.left}</span>
@@ -919,14 +966,7 @@ export default function ExamAttemptPage() {
                     <div>
                       <p className="text-sm text-gray-500 mb-3">Arrange items in the correct order (1 = first):</p>
                       {(() => {
-                        let currentOrderAnswer = answers.get(currentQ.id)?.orderAnswer;
-                        if (!currentOrderAnswer) {
-                          const shuffled = [...(currentQ.orderItems || [])].sort(() => Math.random() - 0.5);
-                          const newAnswers = new Map(answers);
-                          newAnswers.set(currentQ.id, { questionId: currentQ.id, orderAnswer: shuffled });
-                          setAnswers(newAnswers);
-                          currentOrderAnswer = shuffled;
-                        }
+                        const currentOrderAnswer = answers.get(currentQ.id)?.orderAnswer || currentQ.orderItems || [];
                         return currentOrderAnswer.map((item: string, itemIndex: number) => (
                           <div key={itemIndex} className="flex items-center gap-3 mb-2 p-3 bg-gray-50 rounded-lg">
                             <span className="text-sm font-bold text-gray-400 w-6">{itemIndex + 1}.</span>
@@ -944,7 +984,7 @@ export default function ExamAttemptPage() {
                               }}
                               className="flex-1 p-2 border border-gray-200 rounded focus:ring-2 focus:ring-blue-500"
                             >
-                              {(currentQ.orderItems || []).map((opt, oi) => (
+                              {(currentQ.orderItems || []).map((opt: string, oi: number) => (
                                 <option key={oi} value={opt}>{opt}</option>
                               ))}
                             </select>

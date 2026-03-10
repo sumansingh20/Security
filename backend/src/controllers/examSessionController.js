@@ -363,16 +363,33 @@ export const examSessionController = {
             case 'mcq-single': frontendType = 'mcq'; break;
             case 'mcq-multiple': frontendType = 'mcq_multiple'; break;
             case 'true-false': frontendType = 'true_false'; break;
-            case 'fill-blank': frontendType = 'short_answer'; break;
+            case 'fill-blank': frontendType = 'fill_blank'; break;
             case 'short-answer': frontendType = 'short_answer'; break;
             case 'numerical': frontendType = 'numerical'; break;
             case 'long-answer': frontendType = 'essay'; break;
-            case 'code': frontendType = 'essay'; break;
+            case 'code': frontendType = 'code'; break;
             case 'matching': frontendType = 'matching'; break;
             case 'ordering': frontendType = 'ordering'; break;
-            case 'image-based': frontendType = 'short_answer'; break;
+            case 'image-based': frontendType = 'image_based'; break;
             default: frontendType = 'mcq'; break;
           }
+          // For matching: send left items with shuffled right options (don't leak correct pairing)
+          let matchPairsForStudent;
+          let matchRightOptions;
+          if (q.questionType === 'matching' && q.matchPairs && q.matchPairs.length > 0) {
+            const rights = q.matchPairs.map(p => p.right);
+            // Shuffle right-side options
+            const shuffledRights = [...rights].sort(() => Math.random() - 0.5);
+            matchPairsForStudent = q.matchPairs.map(p => ({ left: p.left }));
+            matchRightOptions = shuffledRights;
+          }
+
+          // For ordering: shuffle items (don't leak correct order)
+          let orderItemsShuffled;
+          if (q.questionType === 'ordering' && q.correctOrder && q.correctOrder.length > 0) {
+            orderItemsShuffled = [...q.correctOrder].sort(() => Math.random() - 0.5);
+          }
+
           return {
             id: q._id,
             index,
@@ -382,9 +399,9 @@ export const examSessionController = {
             options: q.options?.map(opt => ({ text: opt.text, _id: opt._id })),
             marks: q.marks,
             imageUrl: q.imageUrl,
-            matchPairs: q.matchPairs?.map(p => ({ left: p.left, right: p.right })),
-            correctOrder: q.questionType === 'ordering' ? q.correctOrder?.map((_, i) => `Item ${i + 1}`) : undefined,
-            orderItems: q.correctOrder,
+            matchPairs: matchPairsForStudent,
+            matchRightOptions: matchRightOptions,
+            orderItems: orderItemsShuffled,
             section: q.section,
           };
         }),
@@ -586,8 +603,73 @@ export const examSessionController = {
                 wrongCount++;
               }
             }
+          } else if (q.questionType === 'matching') {
+            // Auto-grade matching: compare student's match answers with correct pairs
+            if (ans.textAnswer && q.matchPairs && q.matchPairs.length > 0) {
+              try {
+                const studentAnswers = JSON.parse(ans.textAnswer); // Array of right-side answers
+                const correctPairs = q.matchPairs.map(p => p.right);
+                if (Array.isArray(studentAnswers) && studentAnswers.length === correctPairs.length) {
+                  const allCorrect = correctPairs.every((right, i) =>
+                    studentAnswers[i] && studentAnswers[i].trim().toLowerCase() === right.trim().toLowerCase()
+                  );
+                  if (allCorrect) {
+                    score += q.marks || 1;
+                    correctCount++;
+                  } else {
+                    wrongCount++;
+                  }
+                } else {
+                  wrongCount++;
+                }
+              } catch (e) {
+                wrongCount++;
+              }
+            }
+          } else if (q.questionType === 'ordering') {
+            // Auto-grade ordering: compare student's order with correct order
+            if (ans.textAnswer && q.correctOrder && q.correctOrder.length > 0) {
+              try {
+                const studentOrder = JSON.parse(ans.textAnswer); // Array of items in student's order
+                if (Array.isArray(studentOrder) && studentOrder.length === q.correctOrder.length) {
+                  const allCorrect = q.correctOrder.every((item, i) =>
+                    studentOrder[i] && studentOrder[i].trim().toLowerCase() === item.trim().toLowerCase()
+                  );
+                  if (allCorrect) {
+                    score += q.marks || 1;
+                    correctCount++;
+                  } else {
+                    wrongCount++;
+                  }
+                } else {
+                  wrongCount++;
+                }
+              } catch (e) {
+                wrongCount++;
+              }
+            }
+          } else if (q.questionType === 'image-based') {
+            // Auto-grade image-based: if it has MCQ-style options, grade like mcq-single
+            if (ans.selectedOption !== undefined && ans.selectedOption !== null) {
+              const selectedOptId = q.options?.[ans.selectedOption]?._id?.toString();
+              const correctOptionIds = (q.correctOptions || []).map(id => id.toString());
+              if (selectedOptId && correctOptionIds.includes(selectedOptId)) {
+                score += q.marks || 1;
+                correctCount++;
+              } else {
+                wrongCount++;
+              }
+            } else if (ans.textAnswer && q.correctAnswer) {
+              // Text-based answer for image questions
+              if (ans.textAnswer.trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase()) {
+                score += q.marks || 1;
+                correctCount++;
+              } else {
+                wrongCount++;
+              }
+            }
           }
-          // long-answer, code, matching, ordering need manual grading
+          // long-answer, code need manual grading
         }
         
         session.score = score;
