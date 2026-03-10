@@ -1053,7 +1053,7 @@ export default function SecureExamAttemptPage() {
               {q.questionType === 'matching' && q.matchPairs && (
                 <div>
                   {q.matchPairs.map((pair, pi) => {
-                    const rightOpts = q.rightOptions || q.matchPairs!.map(p => p.right).filter(Boolean);
+                    const rightOpts = (q.rightOptions || q.matchPairs!.map(p => p.right)).filter((x): x is string => !!x);
                     return (
                       <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>
                         <span style={{ flex: 1, fontWeight: 500, color: '#e2e8f0' }}>{pair.left}</span>
