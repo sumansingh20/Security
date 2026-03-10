@@ -445,9 +445,9 @@ questionSchema.methods.toStudentView = function() {
     hint: this.hint,
   };
 
-  // Add options for MCQ types
-  if (['mcq-single', 'mcq-multiple', 'true-false'].includes(this.questionType)) {
-    base.options = this.options.map(opt => ({
+  // Add options for MCQ types and image-based
+  if (['mcq-single', 'mcq-multiple', 'true-false', 'image-based'].includes(this.questionType)) {
+    base.options = (this.options || []).map(opt => ({
       _id: opt._id,
       text: opt.text,
       imageUrl: opt.imageUrl,
@@ -535,7 +535,7 @@ questionSchema.statics.getRandomizedQuestions = async function(examId, randomize
     const studentView = q.toStudentView();
     studentView.questionNumber = index + 1;
     
-    if (randomizeOptions) {
+    if (randomizeOptions && studentView.options) {
       studentView.options = studentView.options.sort(() => Math.random() - 0.5);
     }
     
