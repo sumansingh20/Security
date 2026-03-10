@@ -592,17 +592,17 @@ export const getExamResults = async (req, res, next) => {
         .sort({ batchNumber: 1 });
     }
 
-    // Calculate statistics
-    const allScores = await Submission.find({ exam: exam._id }).select('marksObtained');
-    const scores = allScores.map(s => s.marksObtained || 0);
+    // Calculate statistics (10+ violations = fail regardless of marks)
+    const allSubs = await Submission.find({ exam: exam._id }).select('marksObtained totalViolations');
+    const maxViol = exam.maxViolationsBeforeSubmit || 10;
     
     const stats = {
-      totalSubmissions: scores.length,
-      average: scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2) : 0,
-      highest: scores.length > 0 ? Math.max(...scores) : 0,
-      lowest: scores.length > 0 ? Math.min(...scores) : 0,
-      passed: scores.filter(s => s >= exam.passingMarks).length,
-      failed: scores.filter(s => s < exam.passingMarks).length,
+      totalSubmissions: allSubs.length,
+      average: allSubs.length > 0 ? (allSubs.reduce((a, s) => a + (s.marksObtained || 0), 0) / allSubs.length).toFixed(2) : 0,
+      highest: allSubs.length > 0 ? Math.max(...allSubs.map(s => s.marksObtained || 0)) : 0,
+      lowest: allSubs.length > 0 ? Math.min(...allSubs.map(s => s.marksObtained || 0)) : 0,
+      passed: allSubs.filter(s => (s.marksObtained || 0) >= exam.passingMarks && (s.totalViolations || 0) < maxViol).length,
+      failed: allSubs.filter(s => (s.marksObtained || 0) < exam.passingMarks || (s.totalViolations || 0) >= maxViol).length,
     };
 
     res.json({

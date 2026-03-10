@@ -19,6 +19,7 @@ interface ResultData {
   percentage: number;
   passingMarks: number;
   passed: boolean;
+  failReason?: string;
   attemptNumber: number;
   startedAt: string;
   submittedAt: string;
@@ -117,6 +118,11 @@ export default function ResultDetailPage() {
         <div className="lms-alert-title" style={{ fontSize: '20px' }}>
           {result.passed ? 'EXAMINATION PASSED' : 'EXAMINATION FAILED'}
         </div>
+        {result.failReason && (
+          <div style={{ fontSize: '13px', marginTop: '4px', opacity: 0.9 }}>
+            Reason: {result.failReason}
+          </div>
+        )}
         <div style={{ fontSize: '28px', fontWeight: 'bold', margin: '8px 0' }}>
           {result.marksObtained} / {result.totalMarks}
         </div>

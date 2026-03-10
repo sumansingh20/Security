@@ -16,6 +16,8 @@ interface Result {
   totalMarks: number;
   percentage: number;
   status: string;        // 'passed' | 'failed'
+  failReason?: string;
+  totalViolations?: number;
   submittedAt: string;
   reviewAvailable: boolean;
   attemptNumber: number;
@@ -174,6 +176,7 @@ export default function ResultsPage() {
                   <th>Marks</th>
                   <th>Percentage</th>
                   <th>Result</th>
+                  <th>Violations</th>
                   <th>Attempt</th>
                   <th>Submitted</th>
                   <th>Action</th>
@@ -196,6 +199,12 @@ export default function ResultsPage() {
                       >
                         {result.status === 'passed' ? 'PASSED' : 'FAILED'}
                       </span>
+                      {result.failReason && (
+                        <div style={{ fontSize: '10px', color: 'var(--error)', marginTop: '2px' }}>{result.failReason}</div>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'center', color: (result.totalViolations || 0) > 0 ? 'var(--error)' : undefined, fontWeight: (result.totalViolations || 0) >= 10 ? 'bold' : undefined }}>
+                      {result.totalViolations || 0}
                     </td>
                     <td style={{ textAlign: 'center' }}>{result.attemptNumber || 1}</td>
                     <td className="font-mono" style={{ fontSize: '11px' }}>

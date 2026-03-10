@@ -98,11 +98,11 @@ const examSchema = new mongoose.Schema({
   },
   maxViolationsBeforeWarning: {
     type: Number,
-    default: 3,
+    default: 5,
   },
   maxViolationsBeforeSubmit: {
     type: Number,
-    default: 5,
+    default: 10,
   },
   detectTabSwitch: {
     type: Boolean,

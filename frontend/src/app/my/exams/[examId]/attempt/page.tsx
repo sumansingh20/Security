@@ -64,7 +64,7 @@ export default function SecureExamAttemptPage() {
   const [violationCount, setViolationCount] = useState(0);
   const [violationMsg, setViolationMsg] = useState('');
   const [showViolationPopup, setShowViolationPopup] = useState(false);
-  const MAX_VIOLATIONS = 5;
+  const MAX_VIOLATIONS = 10;
 
   // Auto-save state
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -310,21 +310,33 @@ export default function SecureExamAttemptPage() {
     const newCount = violationCountRef.current + 1;
     violationCountRef.current = newCount;
     setViolationCount(newCount);
-    setViolationMsg(`Warning - Violation #${newCount}: ${desc}`);
+    
+    const remaining = MAX_VIOLATIONS - newCount;
+    const msg = remaining <= 0
+      ? `CRITICAL - Violation #${newCount}: ${desc}. Exam is being auto-submitted. You will be marked FAILED.`
+      : remaining <= 3
+      ? `WARNING - Violation #${newCount}: ${desc}. ${remaining} more violations and exam will be auto-submitted with FAIL result!`
+      : `Warning - Violation #${newCount}: ${desc}`;
+    setViolationMsg(msg);
     setShowViolationPopup(true);
-    setTimeout(() => setShowViolationPopup(false), 4000);
+    setTimeout(() => setShowViolationPopup(false), remaining <= 3 ? 6000 : 4000);
 
     try {
       if (attemptIdRef.current) {
-        await api.post(`/student/submissions/${attemptIdRef.current}/violation`, {
+        const res = await api.post(`/student/submissions/${attemptIdRef.current}/violation`, {
           type,
           description: desc,
         });
+        // Server may auto-submit before client threshold
+        if (res.data?.data?.examSubmitted) {
+          handleAutoSubmitRef.current('Server: Maximum violations exceeded');
+          return;
+        }
       }
     } catch { /* silent */ }
 
     if (newCount >= MAX_VIOLATIONS) {
-      handleAutoSubmitRef.current('Exceeded maximum violations');
+      handleAutoSubmitRef.current('Exceeded maximum violations - Result: FAILED');
     }
   }, []);
 

@@ -106,7 +106,7 @@ export default function TeacherResultsPage() {
       setExam(submissionsRes.data.data.exam || null);
       setSubmissions(submissionsRes.data.data.submissions || []);
       setTotalPages(submissionsRes.data.data.pagination?.pages || 1);
-      setAnalytics(analyticsRes.data.data || null);
+      setAnalytics(analyticsRes.data.data?.stats || analyticsRes.data.data || null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load results');
       toast.error('Failed to load results');
@@ -331,7 +331,8 @@ export default function TeacherResultsPage() {
               </thead>
               <tbody>
                 {submissions.map((sub) => {
-                  const passed = exam && sub.marksObtained >= exam.passingMarks;
+                  const violationFailed = sub.totalViolations >= 10;
+                  const passed = !violationFailed && exam && sub.marksObtained >= exam.passingMarks;
                   return (
                     <tr key={sub._id}>
                       <td className="font-mono">{sub.student?.rollNumber || '-'}</td>

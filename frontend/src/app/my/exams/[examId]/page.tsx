@@ -237,7 +237,7 @@ export default function ExamDetailsPage() {
             </li>
             <li className="guideline-item">
               <span className="guideline-icon terminate">5</span>
-              Maximum 5 violations are allowed — the exam auto-submits after that.
+              Maximum 10 violations are allowed — the exam auto-submits after that.
             </li>
             {(exam.shuffleQuestions || exam.randomizeQuestions) && (
               <li className="guideline-item">

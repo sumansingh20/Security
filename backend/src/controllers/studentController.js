@@ -633,12 +633,16 @@ export const getStudentResults = async (req, res, next) => {
       student: req.user._id,
       status: { $in: ['submitted', 'auto-submitted', 'violation-submitted', 'force-submitted', 'evaluated'] },
     })
-      .populate('exam', 'title subject totalMarks passingMarks allowReview')
+      .populate('exam', 'title subject totalMarks passingMarks allowReview maxViolationsBeforeSubmit')
       .sort({ submittedAt: -1 });
 
     const results = submissions
       .filter(s => s.exam) // skip submissions where exam was deleted
-      .map(s => ({
+      .map(s => {
+      // 10+ violations = direct fail regardless of marks
+      const violationFailed = (s.totalViolations || 0) >= (s.exam.maxViolationsBeforeSubmit || 10);
+      const marksPassed = s.marksObtained >= s.exam.passingMarks;
+      return {
       id: s._id,
       examId: s.exam._id,
       examTitle: s.exam.title,
@@ -646,11 +650,14 @@ export const getStudentResults = async (req, res, next) => {
       marksObtained: s.marksObtained,
       totalMarks: s.totalMarks,
       percentage: s.percentage,
-      status: s.marksObtained >= s.exam.passingMarks ? 'passed' : 'failed',
+      status: violationFailed ? 'failed' : (marksPassed ? 'passed' : 'failed'),
+      failReason: violationFailed ? 'Maximum violations exceeded' : (!marksPassed ? 'Below passing marks' : null),
+      totalViolations: s.totalViolations || 0,
       attemptNumber: s.attemptNumber,
       submittedAt: s.submittedAt,
       reviewAvailable: s.exam.allowReview,
-    }));
+    };
+    });
 
     res.json({
       success: true,
@@ -670,7 +677,7 @@ export const getResultDetails = async (req, res, next) => {
       _id: req.params.resultId,
       student: req.user._id,
       status: { $in: ['submitted', 'auto-submitted', 'violation-submitted', 'force-submitted', 'evaluated'] },
-    }).populate('exam', 'title subject totalMarks passingMarks allowReview showCorrectAnswers showExplanations reviewAvailableFrom duration');
+    }).populate('exam', 'title subject totalMarks passingMarks allowReview showCorrectAnswers showExplanations reviewAvailableFrom duration maxViolationsBeforeSubmit');
 
     if (!submission) {
       throw new AppError('Result not found', 404);
@@ -715,6 +722,10 @@ export const getResultDetails = async (req, res, next) => {
     }
 
     // Build response
+    const violationFailed = (submission.totalViolations || 0) >= (exam.maxViolationsBeforeSubmit || 10);
+    const marksPassed = submission.marksObtained >= exam.passingMarks;
+    const passed = !violationFailed && marksPassed;
+
     const result = {
       id: submission._id,
       examId: exam._id,
@@ -725,7 +736,8 @@ export const getResultDetails = async (req, res, next) => {
       totalMarks: submission.totalMarks,
       percentage: submission.percentage,
       passingMarks: exam.passingMarks,
-      passed: submission.marksObtained >= exam.passingMarks,
+      passed,
+      failReason: violationFailed ? 'Maximum violations exceeded (' + submission.totalViolations + ')' : (!marksPassed ? 'Below passing marks' : null),
       attemptNumber: submission.attemptNumber,
       startedAt: submission.startedAt,
       submittedAt: submission.submittedAt,
