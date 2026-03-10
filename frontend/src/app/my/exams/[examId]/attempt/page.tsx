@@ -22,7 +22,8 @@ interface Question {
   marks: number;
   negativeMarks: number;
   section?: string;
-  matchPairs?: { left: string; right: string }[];
+  matchPairs?: { left: string; right?: string; _id?: string }[];
+  rightOptions?: string[];
   orderItems?: string[];
   codeLanguage?: string;
   answerTolerance?: number;
@@ -1052,7 +1053,7 @@ export default function SecureExamAttemptPage() {
               {q.questionType === 'matching' && q.matchPairs && (
                 <div>
                   {q.matchPairs.map((pair, pi) => {
-                    const rightOptions = q.matchPairs!.map(p => p.right);
+                    const rightOpts = q.rightOptions || q.matchPairs!.map(p => p.right).filter(Boolean);
                     return (
                       <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>
                         <span style={{ flex: 1, fontWeight: 500, color: '#e2e8f0' }}>{pair.left}</span>
@@ -1064,7 +1065,7 @@ export default function SecureExamAttemptPage() {
                           style={{ flex: 1, padding: '8px 12px', border: '2px solid #374151', borderRadius: 6, background: '#1a1a2e', color: '#e2e8f0', fontSize: 14, outline: 'none' }}
                         >
                           <option value="">Select match...</option>
-                          {rightOptions.map((r, ri) => (
+                          {rightOpts.map((r: string, ri: number) => (
                             <option key={ri} value={r}>{r}</option>
                           ))}
                         </select>
