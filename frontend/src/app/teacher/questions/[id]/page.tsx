@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
+import toast from 'react-hot-toast';
 
 interface Question {
   _id: string;
@@ -53,6 +54,7 @@ export default function TeacherQuestionDetailPage() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -67,6 +69,32 @@ export default function TeacherQuestionDetailPage() {
     };
     fetchQuestion();
   }, [questionId]);
+
+  const handleDelete = async () => {
+    if (!question) return;
+    const plainText = question.questionText.replace(/<[^>]*>/g, '').substring(0, 50);
+    if (!confirm(`Delete question: "${plainText}..."?\nThis action cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/teacher/questions/${questionId}`);
+      toast.success('Question deleted successfully');
+      router.push('/teacher/questions');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete question');
+      setDeleting(false);
+    }
+  };
+
+  const handleToggleActive = async () => {
+    if (!question) return;
+    try {
+      await api.put(`/teacher/questions/${questionId}`, { isActive: !question.isActive });
+      toast.success(`Question ${!question.isActive ? 'activated' : 'deactivated'}`);
+      setQuestion({ ...question, isActive: !question.isActive });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update question');
+    }
+  };
 
   if (loading) {
     return (
@@ -249,9 +277,16 @@ export default function TeacherQuestionDetailPage() {
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
           <button onClick={() => router.back()} className="lms-btn lms-btn-secondary" style={{ padding: '8px 20px' }}>Back</button>
-          <Link href="/teacher/questions" className="lms-btn lms-btn-primary" style={{ padding: '8px 20px', textDecoration: 'none' }}>All Questions</Link>
+          <Link href="/teacher/questions" className="lms-btn" style={{ padding: '8px 20px', textDecoration: 'none' }}>All Questions</Link>
+          <Link href={`/teacher/questions/${questionId}/edit`} className="lms-btn lms-btn-primary" style={{ padding: '8px 20px', textDecoration: 'none' }}>Edit Question</Link>
+          <button onClick={handleToggleActive} className="lms-btn" style={{ padding: '8px 20px' }}>
+            {question.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <button onClick={handleDelete} disabled={deleting} className="lms-btn lms-btn-danger" style={{ padding: '8px 20px' }}>
+            {deleting ? 'Deleting...' : 'Delete Question'}
+          </button>
         </div>
       </div>
     </LMSLayout>

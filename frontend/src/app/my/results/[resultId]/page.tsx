@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
@@ -49,6 +49,20 @@ interface QuestionReview {
   timeTaken?: number;
 }
 
+const QUESTION_TYPE_LABELS: Record<string, string> = {
+  'mcq-single': 'Single Choice',
+  'mcq-multiple': 'Multiple Choice',
+  'true-false': 'True / False',
+  'fill-blank': 'Fill in the Blank',
+  'numerical': 'Numerical',
+  'short-answer': 'Short Answer',
+  'long-answer': 'Long Answer',
+  'matching': 'Matching',
+  'ordering': 'Ordering',
+  'image-based': 'Image Based',
+  'code': 'Code',
+};
+
 export default function ResultDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -58,6 +72,8 @@ export default function ResultDetailPage() {
   const [questions, setQuestions] = useState<QuestionReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'questions'>('overview');
+  const [questionFilter, setQuestionFilter] = useState<'all' | 'correct' | 'wrong' | 'skipped'>('all');
+  const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -86,6 +102,14 @@ export default function ResultDetailPage() {
     return `${s}s`;
   };
 
+  const scrollToQuestion = (idx: number) => {
+    setActiveTab('questions');
+    setQuestionFilter('all');
+    setTimeout(() => {
+      questionRefs.current[idx]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   if (isLoading || !result) {
     return (
       <LMSLayout
@@ -100,8 +124,26 @@ export default function ResultDetailPage() {
     );
   }
 
-  const totalQuestions = questions.length || (result.correctAnswers + result.wrongAnswers + (result.questionsAttempted ? 0 : 0));
+  const totalQuestions = questions.length || (result.correctAnswers + result.wrongAnswers);
   const unattempted = totalQuestions - result.questionsAttempted;
+
+  // Build per-question status
+  const questionStatuses = questions.map(q => {
+    const isAttempted = (q.studentAnswer || []).length > 0;
+    return { isAttempted, isCorrect: q.isCorrect };
+  });
+  const correctCount = questionStatuses.filter(s => s.isCorrect).length;
+  const wrongCount = questionStatuses.filter(s => s.isAttempted && !s.isCorrect).length;
+  const skippedCount = questionStatuses.filter(s => !s.isAttempted).length;
+
+  const filteredQuestions = questions.map((q, i) => ({ q, i })).filter(({ q }) => {
+    const isAttempted = (q.studentAnswer || []).length > 0;
+    if (questionFilter === 'all') return true;
+    if (questionFilter === 'correct') return q.isCorrect;
+    if (questionFilter === 'wrong') return isAttempted && !q.isCorrect;
+    if (questionFilter === 'skipped') return !isAttempted;
+    return true;
+  });
 
   return (
     <LMSLayout
@@ -136,49 +178,48 @@ export default function ResultDetailPage() {
       {/* Score Breakdown Cards */}
       <div className="lms-stats-row monitor-stats">
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.05s' }}>
-          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value">{formatTime(result.timeTaken)}</div>
           <div className="lms-stat-label">Time Taken</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value">{result.questionsAttempted}/{totalQuestions}</div>
           <div className="lms-stat-label">Attempted</div>
         </div>
+        <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.12s' }}>
+          <div className="lms-stat-value" style={{ color: 'var(--text-muted)' }}>{unattempted}</div>
+          <div className="lms-stat-label">Unattempted</div>
+        </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.15s' }}>
-          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value" style={{ color: 'var(--success)' }}>{result.correctAnswers}</div>
           <div className="lms-stat-label">Correct</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-          <div className="lms-stat-icon"></div>
           <div className="lms-stat-value" style={{ color: 'var(--danger)' }}>{result.wrongAnswers}</div>
           <div className="lms-stat-label">Wrong</div>
         </div>
         <div className="lms-stat stat-card-monitor animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-          <div className="lms-stat-icon"></div>
-          <div className="lms-stat-value">{result.totalViolations}</div>
+          <div className="lms-stat-value" style={{ color: result.totalViolations > 0 ? 'var(--danger)' : undefined }}>{result.totalViolations}</div>
           <div className="lms-stat-label">Violations</div>
         </div>
       </div>
 
       {/* Tabs */}
-      {result.canReview && questions.length > 0 && (
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
-          <button
-            className={`lms-btn ${activeTab === 'overview' ? 'lms-btn-primary' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </button>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
+        <button
+          className={`lms-btn ${activeTab === 'overview' ? 'lms-btn-primary' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Overview
+        </button>
+        {result.canReview && questions.length > 0 && (
           <button
             className={`lms-btn ${activeTab === 'questions' ? 'lms-btn-primary' : ''}`}
             onClick={() => setActiveTab('questions')}
           >
             Question Review ({questions.length})
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
@@ -191,8 +232,8 @@ export default function ResultDetailPage() {
                   <tr><td style={{ width: '180px', fontWeight: 'bold' }}>Examination</td><td>{result.examTitle}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Subject</td><td>{result.subject || '—'}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Attempt</td><td>#{result.attemptNumber}</td></tr>
-                  <tr><td style={{ fontWeight: 'bold' }}>Started</td><td className="font-mono">{safeFormat(result.startedAt, 'dd MMM yyyy HH:mm:ss')}</td></tr>
-                  <tr><td style={{ fontWeight: 'bold' }}>Submitted</td><td className="font-mono">{safeFormat(result.submittedAt, 'dd MMM yyyy HH:mm:ss')}</td></tr>
+                  <tr><td style={{ fontWeight: 'bold' }}>Started</td><td style={{ fontFamily: 'monospace' }}>{safeFormat(result.startedAt, 'dd MMM yyyy HH:mm:ss')}</td></tr>
+                  <tr><td style={{ fontWeight: 'bold' }}>Submitted</td><td style={{ fontFamily: 'monospace' }}>{safeFormat(result.submittedAt, 'dd MMM yyyy HH:mm:ss')}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Time Taken</td><td>{formatTime(result.timeTaken)}</td></tr>
                   <tr><td style={{ fontWeight: 'bold' }}>Submission Type</td><td>{
                     result.submissionType === 'auto-timeout' ? 'Auto-submit (timer expired)' :
@@ -202,7 +243,7 @@ export default function ResultDetailPage() {
                     result.submissionType === 'violation' ? 'Auto-submit (max violations)' :
                     'Manual submission'
                   }</td></tr>
-                  <tr><td style={{ fontWeight: 'bold' }}>Violations</td><td>{result.totalViolations}</td></tr>
+                  <tr><td style={{ fontWeight: 'bold' }}>Violations</td><td style={{ color: result.totalViolations > 0 ? 'var(--danger)' : undefined }}>{result.totalViolations}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -262,31 +303,88 @@ export default function ResultDetailPage() {
                   <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--danger)' }}>{result.wrongAnswers}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Wrong</div>
                 </div>
-                <div style={{ padding: '12px', background: 'var(--surface-hover)', borderRadius: '8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-muted)' }}>{unattempted}</div>
+                <div style={{ padding: '12px', background: 'rgba(249,115,22,0.1)', borderRadius: '8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f97316' }}>{unattempted}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Unattempted</div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Question Navigator Grid */}
+          {result.canReview && questions.length > 0 && (
+            <div className="lms-section animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+              <div className="lms-section-title">Question Navigator</div>
+              <div style={{ padding: '16px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {questions.map((q, idx) => {
+                    const isAttempted = (q.studentAnswer || []).length > 0;
+                    let bg = 'rgba(249,115,22,0.15)'; // orange for skipped
+                    let color = '#f97316';
+                    let border = 'rgba(249,115,22,0.3)';
+                    if (q.isCorrect) { bg = 'rgba(34,197,94,0.15)'; color = '#16a34a'; border = 'rgba(34,197,94,0.3)'; }
+                    else if (isAttempted) { bg = 'rgba(239,68,68,0.15)'; color = '#dc2626'; border = 'rgba(239,68,68,0.3)'; }
+                    return (
+                      <button
+                        key={q._id}
+                        onClick={() => scrollToQuestion(idx)}
+                        style={{
+                          width: '36px', height: '36px', borderRadius: '6px',
+                          background: bg, color, border: `1px solid ${border}`,
+                          fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                        title={`Q${idx + 1}: ${q.isCorrect ? 'Correct' : isAttempted ? 'Wrong' : 'Not Attempted'}`}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', background: 'rgba(34,197,94,0.4)', marginRight: '4px' }} />Correct</span>
+                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', background: 'rgba(239,68,68,0.4)', marginRight: '4px' }} />Wrong</span>
+                  <span><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', background: 'rgba(249,115,22,0.4)', marginRight: '4px' }} />Not Attempted</span>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
       {/* Questions Tab */}
       {activeTab === 'questions' && questions.length > 0 && (
         <div className="lms-section animate-fadeIn">
-          <div className="lms-section-title">Question-by-Question Review</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+            <div className="lms-section-title" style={{ marginBottom: 0 }}>Question-by-Question Review</div>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {[
+                { key: 'all' as const, label: `All (${questions.length})` },
+                { key: 'correct' as const, label: `Correct (${correctCount})` },
+                { key: 'wrong' as const, label: `Wrong (${wrongCount})` },
+                { key: 'skipped' as const, label: `Skipped (${skippedCount})` },
+              ].map(f => (
+                <button key={f.key} className={`lms-btn lms-btn-sm ${questionFilter === f.key ? 'lms-btn-primary' : ''}`}
+                  onClick={() => setQuestionFilter(f.key)}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div style={{ padding: '16px' }}>
-            {questions.map((q, index) => {
+            {filteredQuestions.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No questions match this filter.</div>
+            ) : filteredQuestions.map(({ q, i: index }) => {
               const studentAnswerIds = q.studentAnswer || [];
               const isAttempted = studentAnswerIds.length > 0;
 
               return (
                 <div
                   key={q._id}
+                  ref={el => { questionRefs.current[index] = el; }}
                   style={{
                     marginBottom: '16px',
-                    border: `1px solid ${q.isCorrect ? 'rgba(34,197,94,0.3)' : isAttempted ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`,
+                    border: `1px solid ${q.isCorrect ? 'rgba(34,197,94,0.3)' : isAttempted ? 'rgba(239,68,68,0.3)' : 'rgba(249,115,22,0.3)'}`,
                     borderRadius: '8px',
                     overflow: 'hidden',
                   }}
@@ -299,7 +397,7 @@ export default function ResultDetailPage() {
                         ? 'rgba(34,197,94,0.08)'
                         : isAttempted
                         ? 'rgba(239,68,68,0.08)'
-                        : 'var(--surface-hover)',
+                        : 'rgba(249,115,22,0.06)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
@@ -308,15 +406,14 @@ export default function ResultDetailPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ fontWeight: 'bold', fontSize: '13px' }}>Q{index + 1}</span>
                       <span className={`lms-badge ${q.isCorrect ? 'lms-badge-success' : isAttempted ? 'lms-badge-danger' : 'lms-badge-warning'}`}>
-                        {q.isCorrect ? 'Correct' : isAttempted ? 'Wrong' : 'Skipped'}
+                        {q.isCorrect ? 'Correct' : isAttempted ? 'Wrong' : 'Not Attempted'}
                       </span>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        {q.questionType === 'mcq-single' && 'Single Choice'}
-                        {q.questionType === 'mcq-multiple' && 'Multiple Choice'}
-                        {q.questionType === 'true-false' && 'True/False'}
+                        {QUESTION_TYPE_LABELS[q.questionType] || q.questionType}
                       </span>
+                      {q.timeTaken ? <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatTime(q.timeTaken)})</span> : null}
                     </div>
-                    <span className="font-mono" style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 'bold', fontFamily: 'monospace' }}>
                       {q.marksObtained}/{q.maxMarks}
                     </span>
                   </div>
@@ -327,55 +424,68 @@ export default function ResultDetailPage() {
                       {q.questionText}
                     </div>
 
-                    {/* Options */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {(q.options || []).map((opt, oi) => {
-                        const isSelected = studentAnswerIds.includes(opt._id);
-                        const isCorrectOption = result.showCorrectAnswers && opt.isCorrect;
+                    {/* Options for MCQ types */}
+                    {q.options && q.options.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {q.options.map((opt, oi) => {
+                          const isSelected = studentAnswerIds.includes(opt._id);
+                          const isCorrectOption = result.showCorrectAnswers && opt.isCorrect;
 
-                        let optionStyle: React.CSSProperties = {
-                          padding: '10px 14px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border)',
-                          fontSize: '13px',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '8px',
-                          transition: 'background 0.2s',
-                        };
+                          let optionStyle: React.CSSProperties = {
+                            padding: '10px 14px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border)',
+                            fontSize: '13px',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '8px',
+                            transition: 'background 0.2s',
+                          };
 
-                        if (isSelected && q.isCorrect) {
-                          optionStyle.background = 'rgba(34,197,94,0.1)';
-                          optionStyle.borderColor = 'rgba(34,197,94,0.4)';
-                        } else if (isSelected && !q.isCorrect) {
-                          optionStyle.background = 'rgba(239,68,68,0.1)';
-                          optionStyle.borderColor = 'rgba(239,68,68,0.4)';
-                        } else if (isCorrectOption) {
-                          optionStyle.background = 'rgba(34,197,94,0.05)';
-                          optionStyle.borderColor = 'rgba(34,197,94,0.3)';
-                        }
+                          if (isSelected && q.isCorrect) {
+                            optionStyle.background = 'rgba(34,197,94,0.1)';
+                            optionStyle.borderColor = 'rgba(34,197,94,0.4)';
+                          } else if (isSelected && !q.isCorrect) {
+                            optionStyle.background = 'rgba(239,68,68,0.1)';
+                            optionStyle.borderColor = 'rgba(239,68,68,0.4)';
+                          } else if (isCorrectOption) {
+                            optionStyle.background = 'rgba(34,197,94,0.05)';
+                            optionStyle.borderColor = 'rgba(34,197,94,0.3)';
+                          }
 
-                        return (
-                          <div key={opt._id} style={optionStyle}>
-                            <span style={{ fontWeight: 'bold', minWidth: '20px', color: 'var(--text-muted)' }}>
-                              {String.fromCharCode(65 + oi)}.
-                            </span>
-                            <span style={{ flex: 1 }}>{opt.text}</span>
-                            <span style={{ fontSize: '14px' }}>
-                              {isSelected && q.isCorrect && '(correct)'}
-                              {isSelected && !q.isCorrect && '(wrong)'}
-                              {!isSelected && isCorrectOption && '(correct)'}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          return (
+                            <div key={opt._id} style={optionStyle}>
+                              <span style={{ fontWeight: 'bold', minWidth: '20px', color: 'var(--text-muted)' }}>
+                                {String.fromCharCode(65 + oi)}.
+                              </span>
+                              <span style={{ flex: 1 }}>{opt.text}</span>
+                              <span style={{ fontSize: '11px', fontWeight: 600 }}>
+                                {isSelected && q.isCorrect && <span style={{ color: '#16a34a' }}>(your answer - correct)</span>}
+                                {isSelected && !q.isCorrect && <span style={{ color: '#dc2626' }}>(your answer)</span>}
+                                {!isSelected && isCorrectOption && <span style={{ color: '#16a34a' }}>(correct answer)</span>}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
-                    {/* Legend */}
+                    {/* Not attempted indicator */}
+                    {!isAttempted && (
+                      <div style={{
+                        marginTop: '8px', padding: '10px 14px',
+                        background: 'rgba(249,115,22,0.06)', border: '1px dashed rgba(249,115,22,0.3)',
+                        borderRadius: '6px', fontSize: '13px', color: '#f97316', fontStyle: 'italic',
+                      }}>
+                        You did not attempt this question
+                      </div>
+                    )}
+
+                    {/* Legend for attempted */}
                     {isAttempted && (
                       <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                        • Your answer is highlighted
-                        {result.showCorrectAnswers && !q.isCorrect && ' • Correct answer shown with (correct)'}
+                        Your answer is highlighted
+                        {result.showCorrectAnswers && !q.isCorrect && ' · Correct answer marked in green'}
                       </div>
                     )}
 
@@ -405,9 +515,9 @@ export default function ResultDetailPage() {
 
       {/* Navigation */}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', padding: '20px 0' }}>
-        <Link href="/my/results" className="lms-btn">← Back to Results</Link>
-        <Link href="/my/exams" className="lms-btn">Examinations</Link>
-        <Link href="/my" className="lms-btn">Dashboard</Link>
+        <Link href="/my/results" className="lms-btn" style={{ textDecoration: 'none' }}>← Back to Results</Link>
+        <Link href="/my/exams" className="lms-btn" style={{ textDecoration: 'none' }}>Examinations</Link>
+        <Link href="/my" className="lms-btn" style={{ textDecoration: 'none' }}>Dashboard</Link>
       </div>
     </LMSLayout>
   );

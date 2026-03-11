@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import LMSLayout from '@/components/layouts/LMSLayout';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
+import { safeFormat } from '@/lib/dateUtils';
 
 interface Category {
   _id: string;
@@ -157,6 +158,28 @@ export default function TeacherQuestionBankPage() {
     const plain = text.replace(/<[^>]*>/g, '');
     if (plain.length <= maxLength) return plain;
     return plain.substring(0, maxLength) + '...';
+  };
+
+  const handleDeleteQuestion = async (questionId: string, questionText: string) => {
+    const plainText = questionText.replace(/<[^>]*>/g, '').substring(0, 50);
+    if (!confirm(`Delete question: "${plainText}..."?\nThis action cannot be undone.`)) return;
+    try {
+      await api.delete(`/teacher/questions/${questionId}`);
+      toast.success('Question deleted successfully');
+      fetchQuestions();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete question');
+    }
+  };
+
+  const handleToggleActive = async (questionId: string, currentActive: boolean) => {
+    try {
+      await api.put(`/teacher/questions/${questionId}`, { isActive: !currentActive });
+      toast.success(`Question ${!currentActive ? 'activated' : 'deactivated'}`);
+      fetchQuestions();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update question');
+    }
   };
 
   if (isLoading) {
@@ -314,12 +337,33 @@ export default function TeacherQuestionBankPage() {
                       </span>
                     </td>
                     <td>
-                      <Link
-                        href={`/teacher/questions/${question._id}`}
-                        className="lms-btn lms-btn-sm"
-                      >
-                        View
-                      </Link>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        <Link
+                          href={`/teacher/questions/${question._id}`}
+                          className="lms-btn lms-btn-sm"
+                        >
+                          View
+                        </Link>
+                        <Link
+                          href={`/teacher/questions/${question._id}/edit`}
+                          className="lms-btn lms-btn-sm lms-btn-primary"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => handleToggleActive(question._id, question.isActive)}
+                          className={`lms-btn lms-btn-sm ${question.isActive ? '' : 'lms-btn-primary'}`}
+                          title={question.isActive ? 'Deactivate' : 'Activate'}
+                        >
+                          {question.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteQuestion(question._id, question.questionText)}
+                          className="lms-btn lms-btn-sm lms-btn-danger"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
