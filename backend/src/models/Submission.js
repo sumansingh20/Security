@@ -261,6 +261,12 @@ submissionSchema.methods.visitQuestion = function(questionId) {
 // Method to calculate results
 submissionSchema.methods.calculateResults = async function() {
   const Question = mongoose.model('Question');
+  const Exam = mongoose.model('Exam');
+  
+  // Fetch exam for negative marking settings
+  const exam = await Exam.findById(this.exam);
+  const examNegativeMarking = exam?.negativeMarking || false;
+  const examNegativeMarkValue = exam?.negativeMarkValue || 0;
   
   let totalMarks = 0;
   let marksObtained = 0;
@@ -289,7 +295,20 @@ submissionSchema.methods.calculateResults = async function() {
     const answerToCheck = textTypes.includes(question.questionType) && hasTextAnswer
       ? answer.textAnswer
       : answer.selectedOptions;
-    const marks = question.checkAnswer(answerToCheck);
+    let marks = question.checkAnswer(answerToCheck);
+
+    // checkAnswer returns -question.negativeMarks for wrong answers.
+    // If question.negativeMarks is 0, marks will be 0 or -0 for wrong.
+    // Apply exam-level negative marking when question has no per-question negative marks.
+    if (marks !== null && marks !== undefined && marks <= 0 && question.negativeMarks === 0) {
+      // Wrong answer with no question-level negative marking
+      if (examNegativeMarking && examNegativeMarkValue > 0) {
+        // Check if student actually attempted (marks 0 from wrong, not from unanswered)
+        marks = -(examNegativeMarkValue * question.marks);
+      } else {
+        marks = 0; // Normalize -0 to 0
+      }
+    }
 
     // checkAnswer returns null for manual-grading types (long-answer, code)
     // Treat null as 0 for auto-calculation; admin can grade later
@@ -308,6 +327,9 @@ submissionSchema.methods.calculateResults = async function() {
       answer.isCorrect = false;
     }
   }
+
+  // Ensure total marks obtained doesn't go below 0
+  marksObtained = Math.max(0, marksObtained);
 
   this.totalMarks = totalMarks;
   this.marksObtained = marksObtained;

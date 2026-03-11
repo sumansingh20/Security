@@ -15,17 +15,25 @@ export interface Question {
   _id: string;
   questionNumber: number;
   questionText: string;
-  questionType: 'mcq-single' | 'mcq-multiple' | 'true-false';
+  questionType: 'mcq-single' | 'mcq-multiple' | 'true-false' | 'fill-blank' | 'numerical' | 'short-answer' | 'long-answer' | 'matching' | 'ordering' | 'image-based' | 'code';
   options?: { _id: string; text: string; imageUrl?: string }[];
   imageUrl?: string;
   marks: number;
   negativeMarks: number;
   section?: string;
+  matchPairs?: { left: string; right?: string }[];
+  matchRightOptions?: string[];
+  orderItems?: string[];
+  codeLanguage?: string;
+  answerTolerance?: number;
 }
 
 export interface Answer {
   questionId: string;
   selectedOptions?: string[];
+  textAnswer?: string;
+  matchAnswers?: string[];
+  orderAnswer?: string[];
   markedForReview: boolean;
   visited: boolean;
   timeTaken?: number;
@@ -450,7 +458,7 @@ export const useExamStore = create<ExamState>((set, get) => ({
     }
     
     const hasAnswer = 
-      (answer.selectedOptions && answer.selectedOptions.length > 0);
+      (answer.selectedOptions && answer.selectedOptions.length > 0) || !!answer.textAnswer;
     
     if (hasAnswer && answer.markedForReview) {
       return 'answeredflagged';
@@ -480,7 +488,7 @@ export const useExamStore = create<ExamState>((set, get) => ({
     currentAttempt.questions.forEach((q) => {
       const answer = currentAttempt.answers.get(q._id);
       const hasAnswer = 
-        (answer?.selectedOptions && answer.selectedOptions.length > 0);
+        (answer?.selectedOptions && answer.selectedOptions.length > 0) || !!answer?.textAnswer;
       
       if (hasAnswer) {
         answered++;

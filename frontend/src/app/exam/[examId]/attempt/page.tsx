@@ -172,10 +172,28 @@ export default function ExamAttemptPage() {
       setMaxViolations(data.session.maxViolations);
       setCurrentQuestion(data.session.currentQuestionIndex);
 
-      // Load saved answers
+      // Load saved answers - restore matching/ordering state from textAnswer
       const savedAnswers = new Map<string, Answer>();
-      data.answers?.forEach((a: Answer) => {
-        savedAnswers.set(a.questionId, a);
+      const questionMap = new Map<string, Question>();
+      (data.questions || []).forEach((q: Question) => questionMap.set(q.id, q));
+      
+      data.answers?.forEach((a: any) => {
+        const answer: Answer = {
+          questionId: a.questionId,
+          selectedOption: a.selectedOption,
+          selectedOptions: a.selectedOptions,
+          textAnswer: a.textAnswer,
+        };
+        // Restore matchAnswers/orderAnswer from textAnswer for matching/ordering questions
+        const q = questionMap.get(a.questionId);
+        if (q && a.textAnswer) {
+          if (q.type === 'matching') {
+            try { answer.matchAnswers = JSON.parse(a.textAnswer); } catch {}
+          } else if (q.type === 'ordering') {
+            try { answer.orderAnswer = JSON.parse(a.textAnswer); } catch {}
+          }
+        }
+        savedAnswers.set(a.questionId, answer);
       });
       setAnswers(savedAnswers);
 
@@ -468,7 +486,7 @@ export default function ExamAttemptPage() {
   const handleSubmit = async () => {
     if (submitted || terminated) return;
 
-    const unanswered = questions.filter(q => !answers.has(q.id)).length;
+    const unanswered = questions.filter(q => getQuestionStatus(q.id) !== 'answered').length;
     
     if (unanswered > 0) {
       const confirmed = window.confirm(
@@ -560,7 +578,14 @@ export default function ExamAttemptPage() {
 
   // Get question status
   const getQuestionStatus = (questionId: string) => {
-    return answers.has(questionId) ? 'answered' : 'unanswered';
+    const answer = answers.get(questionId);
+    if (!answer) return 'unanswered';
+    const hasAnswer = answer.selectedOption !== undefined || 
+      (answer.selectedOptions && answer.selectedOptions.length > 0) ||
+      !!answer.textAnswer ||
+      (answer.matchAnswers && answer.matchAnswers.some(a => a)) ||
+      (answer.orderAnswer && answer.orderAnswer.length > 0);
+    return hasAnswer ? 'answered' : 'unanswered';
   };
 
   // Loading state
@@ -620,7 +645,7 @@ export default function ExamAttemptPage() {
           <h2 className="text-xl font-bold text-gray-900 mb-2">Exam Submitted</h2>
           <p className="text-gray-600 mb-2">Your exam has been submitted successfully.</p>
           <p className="text-sm text-gray-500 mb-4">
-            Questions Answered: {answers.size} / {totalQuestions}
+            Questions Answered: {questions.filter(q => getQuestionStatus(q.id) === 'answered').length} / {totalQuestions}
           </p>
           <button
             onClick={() => router.push('/my/results')}
@@ -685,7 +710,7 @@ export default function ExamAttemptPage() {
 
             {/* Progress */}
             <div className="text-sm">
-              <span className="font-medium">{answers.size}</span>
+              <span className="font-medium">{questions.filter(q => getQuestionStatus(q.id) === 'answered').length}</span>
               <span className="text-blue-200">/{totalQuestions} answered</span>
             </div>
 

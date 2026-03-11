@@ -398,16 +398,20 @@ export const examSessionController = {
             backendType: q.questionType,
             options: q.options?.map(opt => ({ text: opt.text, _id: opt._id })),
             marks: q.marks,
+            negativeMarks: q.negativeMarks || 0,
             imageUrl: q.imageUrl,
             matchPairs: matchPairsForStudent,
             matchRightOptions: matchRightOptions,
             orderItems: orderItemsShuffled,
             section: q.section,
+            codeLanguage: q.questionType === 'code' ? q.codeLanguage : undefined,
+            answerTolerance: q.questionType === 'numerical' ? q.answerTolerance : undefined,
           };
         }),
         answers: session.answers.map(a => ({
           questionId: a.questionId,
           selectedOption: a.selectedOption,
+          selectedOptions: a.selectedOptions,
           textAnswer: a.textAnswer,
         })),
       });
@@ -540,14 +544,25 @@ export const examSessionController = {
       let wrongCount = 0;
       
       try {
+        const examForGrading = await Exam.findById(session.exam);
         const questions = await Question.find({ exam: session.exam, isActive: true });
         const questionMap = new Map();
         questions.forEach(q => questionMap.set(q._id.toString(), q));
+
+        // Helper: compute effective negative marks for a question
+        const getEffectiveNegativeMarks = (q) => {
+          if (q.negativeMarks > 0) return q.negativeMarks;
+          if (examForGrading && examForGrading.negativeMarking && examForGrading.negativeMarkValue > 0) {
+            return examForGrading.negativeMarkValue * (q.marks || 1);
+          }
+          return 0;
+        };
         
         for (const ans of session.answers) {
           const q = questionMap.get(ans.questionId.toString());
           if (!q) continue;
           totalMarks += q.marks || 1;
+          const negMarks = getEffectiveNegativeMarks(q);
           
           if (q.questionType === 'mcq-single' || q.questionType === 'true-false') {
             if (ans.selectedOption !== undefined && ans.selectedOption !== null) {
@@ -558,11 +573,10 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             }
           } else if (q.questionType === 'mcq-multiple') {
-            // For multiple-select: check selectedOptions array, fallback to selectedOption
             const correctOptionIds = (q.correctOptions || []).map(id => id.toString());
             const selIndices = (ans.selectedOptions && ans.selectedOptions.length > 0)
               ? ans.selectedOptions
@@ -579,7 +593,7 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             }
           } else if (q.questionType === 'numerical') {
@@ -591,7 +605,7 @@ export const examSessionController = {
               correctCount++;
             } else if (ans.textAnswer) {
               wrongCount++;
-              score -= (q.negativeMarks || 0);
+              score -= negMarks;
             }
           } else if (q.questionType === 'fill-blank' || q.questionType === 'short-answer') {
             if (ans.textAnswer && q.correctAnswer) {
@@ -604,14 +618,13 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             }
           } else if (q.questionType === 'matching') {
-            // Auto-grade matching: compare student's match answers with correct pairs
             if (ans.textAnswer && q.matchPairs && q.matchPairs.length > 0) {
               try {
-                const studentAnswers = JSON.parse(ans.textAnswer); // Array of right-side answers
+                const studentAnswers = JSON.parse(ans.textAnswer);
                 const correctPairs = q.matchPairs.map(p => p.right);
                 if (Array.isArray(studentAnswers) && studentAnswers.length === correctPairs.length) {
                   const allCorrect = correctPairs.every((right, i) =>
@@ -622,22 +635,21 @@ export const examSessionController = {
                     correctCount++;
                   } else {
                     wrongCount++;
-                    score -= (q.negativeMarks || 0);
+                    score -= negMarks;
                   }
                 } else {
                   wrongCount++;
-                  score -= (q.negativeMarks || 0);
+                  score -= negMarks;
                 }
               } catch (e) {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             }
           } else if (q.questionType === 'ordering') {
-            // Auto-grade ordering: compare student's order with correct order
             if (ans.textAnswer && q.correctOrder && q.correctOrder.length > 0) {
               try {
-                const studentOrder = JSON.parse(ans.textAnswer); // Array of items in student's order
+                const studentOrder = JSON.parse(ans.textAnswer);
                 if (Array.isArray(studentOrder) && studentOrder.length === q.correctOrder.length) {
                   const allCorrect = q.correctOrder.every((item, i) =>
                     studentOrder[i] && studentOrder[i].trim().toLowerCase() === item.trim().toLowerCase()
@@ -647,19 +659,18 @@ export const examSessionController = {
                     correctCount++;
                   } else {
                     wrongCount++;
-                    score -= (q.negativeMarks || 0);
+                    score -= negMarks;
                   }
                 } else {
                   wrongCount++;
-                  score -= (q.negativeMarks || 0);
+                  score -= negMarks;
                 }
               } catch (e) {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             }
           } else if (q.questionType === 'image-based') {
-            // Auto-grade image-based: if it has MCQ-style options, grade like mcq-single
             if (ans.selectedOption !== undefined && ans.selectedOption !== null) {
               const selectedOptId = q.options?.[ans.selectedOption]?._id?.toString();
               const correctOptionIds = (q.correctOptions || []).map(id => id.toString());
@@ -668,21 +679,23 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             } else if (ans.textAnswer && q.correctAnswer) {
-              // Text-based answer for image questions
               if (ans.textAnswer.trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase()) {
                 score += q.marks || 1;
                 correctCount++;
               } else {
                 wrongCount++;
-                score -= (q.negativeMarks || 0);
+                score -= negMarks;
               }
             }
           }
           // long-answer, code need manual grading
         }
+        
+        // Ensure score doesn't go below 0
+        score = Math.max(0, score);
         
         session.score = score;
         session.totalMarks = totalMarks;
@@ -690,6 +703,10 @@ export const examSessionController = {
         session.wrongCount = wrongCount;
         session.questionsAttempted = session.answers.length;
         await session.save();
+        
+        // Store exam negative marking info for submission creation
+        var examNegativeMarking = examForGrading?.negativeMarking || false;
+        var examNegativeMarkValue = examForGrading?.negativeMarkValue || 0;
 
         // =====================================================
         // CREATE SUBMISSION RECORD so results appear in the app
@@ -724,8 +741,8 @@ export const examSessionController = {
                 marksObtained: 0,
               };
 
-              // Convert selectedOption index to option ObjectId for MCQ types
-              if ((q.questionType === 'mcq-single' || q.questionType === 'mcq-multiple' || q.questionType === 'true-false') 
+              // Convert selectedOption index to option ObjectId for MCQ types and image-based
+              if (['mcq-single', 'mcq-multiple', 'true-false', 'image-based'].includes(q.questionType) 
                   && ans.selectedOption !== undefined && ans.selectedOption !== null) {
                 if (q.questionType === 'mcq-multiple' && ans.selectedOptions && ans.selectedOptions.length > 0) {
                   // For mcq-multiple, convert all selected indices to ObjectIds
@@ -771,8 +788,8 @@ export const examSessionController = {
               answers: submissionAnswers,
               questionOrder: questions.map(q => q._id),
               totalMarks: totalMarks,
-              marksObtained: score,
-              percentage: totalMarks > 0 ? Math.max(0, (score / totalMarks) * 100) : 0,
+              marksObtained: Math.max(0, score),
+              percentage: totalMarks > 0 ? Math.max(0, (Math.max(0, score) / totalMarks) * 100) : 0,
               questionsAttempted: session.answers.length,
               correctAnswers: correctCount,
               wrongAnswers: wrongCount,

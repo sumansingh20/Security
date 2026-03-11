@@ -475,7 +475,7 @@ export default function ResultDetailPage() {
                       </div>
                     )}
 
-                    {/* Text Answer (fill-blank, numerical, short-answer) */}
+                    {/* Text Answer (fill-blank, numerical, short-answer, matching, ordering) */}
                     {q.textAnswer && (
                       <div style={{
                         marginTop: '8px', padding: '10px 14px',
@@ -485,7 +485,35 @@ export default function ResultDetailPage() {
                       }}>
                         <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>Your Answer</span>
                         <div style={{ marginTop: '4px', fontWeight: 500 }}>
-                          {typeof q.textAnswer === 'string' ? q.textAnswer : JSON.stringify(q.textAnswer)}
+                          {(() => {
+                            // Try to parse JSON for matching/ordering display
+                            if (typeof q.textAnswer === 'string') {
+                              try {
+                                const parsed = JSON.parse(q.textAnswer);
+                                if (Array.isArray(parsed)) {
+                                  if (q.questionType === 'matching' && q.matchPairs) {
+                                    return q.matchPairs.map((pair: any, pi: number) => (
+                                      <div key={pi} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: pi > 0 ? '4px' : 0 }}>
+                                        <span>{pair.left}</span>
+                                        <span style={{ color: 'var(--text-muted)' }}>→</span>
+                                        <span style={{ fontWeight: 600 }}>{parsed[pi] || '(not matched)'}</span>
+                                      </div>
+                                    ));
+                                  }
+                                  if (q.questionType === 'ordering') {
+                                    return (
+                                      <ol style={{ margin: '0 0 0 16px', padding: 0 }}>
+                                        {parsed.map((item: string, oi: number) => <li key={oi} style={{ marginTop: '2px' }}>{item}</li>)}
+                                      </ol>
+                                    );
+                                  }
+                                  return parsed.join(', ');
+                                }
+                              } catch {}
+                              return q.textAnswer;
+                            }
+                            return JSON.stringify(q.textAnswer);
+                          })()}
                         </div>
                       </div>
                     )}
@@ -537,9 +565,9 @@ export default function ResultDetailPage() {
                     )}
 
                     {/* Negative marks badge */}
-                    {q.marksObtained < 0 && (q.negativeMarks ?? 0) > 0 && (
+                    {q.marksObtained < 0 && (
                       <div style={{ marginTop: '8px', fontSize: '11px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        ⚠ Negative marking: -{q.negativeMarks} for wrong answer
+                        ⚠ Negative marking: {q.marksObtained} for wrong answer
                       </div>
                     )}
 
