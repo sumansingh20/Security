@@ -176,7 +176,7 @@ export default function ResultDetailPage() {
           {result.marksObtained} / {result.totalMarks}
         </div>
         <div style={{ fontSize: '14px' }}>
-          {Math.round(result.percentage)}% · Passing: {result.passingMarks} marks
+          {Math.max(0, Math.round(result.percentage))}% · Passing: {result.passingMarks} marks
         </div>
       </div>
 
@@ -262,7 +262,7 @@ export default function ResultDetailPage() {
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
                   <span>Score: {result.marksObtained}/{result.totalMarks}</span>
-                  <span>{Math.round(result.percentage)}%</span>
+                  <span>{Math.max(0, Math.round(result.percentage))}%</span>
                 </div>
                 <div style={{ background: 'var(--surface-hover)', borderRadius: '8px', height: '24px', overflow: 'hidden', position: 'relative' }}>
                   <div

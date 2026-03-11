@@ -18,13 +18,16 @@ interface SubmissionDetail {
       questionText: string;
       questionType: string;
       marks: number;
-      options?: { text: string; isCorrect: boolean }[];
+      negativeMarks?: number;
+      options?: { _id: string; text: string; isCorrect: boolean }[];
       correctAnswer?: string | number;
       explanation?: string;
+      matchPairs?: { left: string; right: string }[];
+      correctOrder?: string[];
     };
-    selectedOptions?: number[];
+    selectedOptions?: string[];
     textAnswer?: string;
-    isCorrect?: boolean;
+    isCorrect?: boolean | null;
     marksObtained: number;
   }[];
   score: number;
@@ -172,31 +175,37 @@ export default function TeacherSubmissionDetailPage() {
         <div style={{ padding: '16px' }}>
           {submission.answers?.map((answer, idx) => {
             const q = answer.question;
+            const selectedIds = (answer.selectedOptions || []).map(String);
+            const hasTextAnswer = !!answer.textAnswer;
+            const isAttempted = selectedIds.length > 0 || hasTextAnswer;
+            const isCorrect = answer.isCorrect === true;
+            const isWrong = isAttempted && !isCorrect;
+            const isSkipped = !isAttempted;
             return (
               <div
                 key={answer.questionId || idx}
                 style={{
                   marginBottom: '16px',
-                  border: `1px solid ${answer.isCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                  border: `1px solid ${isCorrect ? 'rgba(34,197,94,0.3)' : isWrong ? 'rgba(239,68,68,0.3)' : 'rgba(249,115,22,0.3)'}`,
                   borderRadius: '8px',
                   overflow: 'hidden',
                 }}
               >
                 <div style={{
                   padding: '12px 16px',
-                  background: answer.isCorrect ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                  background: isCorrect ? 'rgba(34,197,94,0.08)' : isWrong ? 'rgba(239,68,68,0.08)' : 'rgba(249,115,22,0.06)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontWeight: 'bold', fontSize: '13px' }}>Q{idx + 1}</span>
-                    <span className={`lms-badge ${answer.isCorrect ? 'lms-badge-success' : 'lms-badge-danger'}`}>
-                      {answer.isCorrect ? 'Correct' : 'Wrong'}
+                    <span className={`lms-badge ${isCorrect ? 'lms-badge-success' : isWrong ? 'lms-badge-danger' : 'lms-badge-warning'}`}>
+                      {isCorrect ? 'Correct' : isWrong ? 'Wrong' : 'Not Attempted'}
                     </span>
                   </div>
-                  <span className="font-mono" style={{ fontSize: '13px', fontWeight: 'bold' }}>
-                    {answer.marksObtained}/{q?.marks || 0}
+                  <span className="font-mono" style={{ fontSize: '13px', fontWeight: 'bold', color: answer.marksObtained > 0 ? '#16a34a' : answer.marksObtained < 0 ? '#dc2626' : undefined }}>
+                    {answer.marksObtained > 0 ? '+' : ''}{answer.marksObtained}/{q?.marks || 0}
                   </span>
                 </div>
 
@@ -208,7 +217,7 @@ export default function TeacherSubmissionDetailPage() {
                   {answer.selectedOptions && q?.options && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {q.options.map((opt, oi) => {
-                        const isSelected = answer.selectedOptions?.includes(oi);
+                        const isSelected = selectedIds.includes(opt._id?.toString?.() || String(oi));
                         const isCorrectOpt = opt.isCorrect;
 
                         let bg = 'transparent';
@@ -221,8 +230,8 @@ export default function TeacherSubmissionDetailPage() {
                           <div key={oi} style={{ padding: '8px 12px', borderRadius: '6px', border: `1px solid ${borderColor}`, background: bg, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontWeight: 'bold', color: 'var(--text-muted)' }}>{String.fromCharCode(65 + oi)}.</span>
                             <span style={{ flex: 1 }}>{opt.text}</span>
-                            {isSelected && <span style={{ fontSize: '11px' }}>(selected)</span>}
-                            {isCorrectOpt && <span style={{ color: 'var(--success)', fontSize: '11px' }}>correct</span>}
+                            {isSelected && <span style={{ fontSize: '11px', fontWeight: 600, color: isCorrectOpt ? '#16a34a' : '#dc2626' }}>(selected{isCorrectOpt ? ' - correct' : ''})</span>}
+                            {!isSelected && isCorrectOpt && <span style={{ color: 'var(--success)', fontSize: '11px', fontWeight: 600 }}>(correct answer)</span>}
                           </div>
                         );
                       })}
@@ -230,8 +239,72 @@ export default function TeacherSubmissionDetailPage() {
                   )}
 
                   {answer.textAnswer && (
-                    <div style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px', fontSize: '13px', marginTop: '8px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Answer: </span>{answer.textAnswer}
+                    <div style={{
+                      background: isCorrect ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                      border: `1px solid ${isCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                      borderRadius: '6px', padding: '10px', fontSize: '13px', marginTop: '8px',
+                    }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>Student&apos;s Answer</span>
+                      <div style={{ marginTop: '4px', fontWeight: 500 }}>{answer.textAnswer}</div>
+                    </div>
+                  )}
+
+                  {q?.correctAnswer !== undefined && q?.correctAnswer !== null && (
+                    <div style={{
+                      marginTop: '8px', padding: '10px 14px',
+                      background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.25)',
+                      borderRadius: '6px', fontSize: '13px',
+                    }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Correct Answer</span>
+                      <div style={{ marginTop: '4px', fontWeight: 600, color: '#16a34a' }}>
+                        {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : String(q.correctAnswer)}
+                      </div>
+                    </div>
+                  )}
+
+                  {q?.matchPairs && q.matchPairs.length > 0 && (
+                    <div style={{
+                      marginTop: '8px', padding: '10px 14px',
+                      background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.25)',
+                      borderRadius: '6px', fontSize: '13px',
+                    }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Correct Matches</span>
+                      {q.matchPairs.map((pair, pi) => (
+                        <div key={pi} style={{ marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600 }}>{pair.left}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
+                          <span style={{ color: '#16a34a', fontWeight: 600 }}>{pair.right}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {q?.correctOrder && q.correctOrder.length > 0 && (
+                    <div style={{
+                      marginTop: '8px', padding: '10px 14px',
+                      background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.25)',
+                      borderRadius: '6px', fontSize: '13px',
+                    }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Correct Order</span>
+                      <ol style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                        {q.correctOrder.map((item, oi) => <li key={oi} style={{ marginTop: '2px' }}>{item}</li>)}
+                      </ol>
+                    </div>
+                  )}
+
+                  {answer.marksObtained < 0 && (q?.negativeMarks ?? 0) > 0 && (
+                    <div style={{ marginTop: '8px', fontSize: '11px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ⚠ Negative marking: -{q.negativeMarks} for wrong answer
+                    </div>
+                  )}
+
+                  {isSkipped && (
+                    <div style={{
+                      marginTop: '8px', padding: '10px 14px',
+                      background: 'rgba(249,115,22,0.06)', border: '1px dashed rgba(249,115,22,0.3)',
+                      borderRadius: '6px', fontSize: '13px', color: '#f97316', fontStyle: 'italic',
+                    }}>
+                      Student did not attempt this question
                     </div>
                   )}
 

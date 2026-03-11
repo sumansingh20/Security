@@ -152,7 +152,7 @@ export default function AdminResultsPage() {
                   </td>
                   <td><Link href={`/admin/exams/${result.exam?._id}`} className="lms-link">{result.exam?.title}</Link></td>
                   <td>{result.marksObtained || 0} / {result.totalMarks || 0}</td>
-                  <td>{Math.round(result.percentage || 0)}%</td>
+                  <td>{Math.max(0, Math.round(result.percentage || 0))}%</td>
                   <td>
                     <span className={`lms-badge ${result.passed ? 'lms-badge-success' : 'lms-badge-danger'}`}>
                       {result.passed ? 'PASSED' : 'FAILED'}

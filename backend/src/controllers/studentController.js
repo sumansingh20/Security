@@ -611,6 +611,8 @@ export const getExamReview = async (req, res, next) => {
         textAnswer: answer?.textAnswer || null,
         isCorrect: answer?.isCorrect,
         marksObtained: answer?.marksObtained || 0,
+        maxMarks: q.marks,
+        negativeMarks: q.negativeMarks || 0,
         timeTaken: answer?.timeTaken || 0,
       };
     });

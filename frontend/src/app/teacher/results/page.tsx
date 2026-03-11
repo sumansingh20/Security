@@ -299,9 +299,9 @@ export default function TeacherResultsPage() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <div style={{ flex: 1, height: '6px', background: 'var(--surface-hover)', borderRadius: '3px', minWidth: '40px', maxWidth: '80px', overflow: 'hidden' }}>
-                          <div style={{ width: `${Math.min(r.percentage, 100)}%`, height: '100%', background: isPassed ? 'var(--success)' : 'var(--danger)', borderRadius: '3px' }} />
+                          <div style={{ width: `${Math.max(0, Math.min(r.percentage, 100))}%`, height: '100%', background: isPassed ? 'var(--success)' : 'var(--danger)', borderRadius: '3px' }} />
                         </div>
-                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{Math.round(r.percentage)}%</span>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{Math.max(0, Math.round(r.percentage))}%</span>
                       </div>
                     </td>
                     <td>

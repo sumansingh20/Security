@@ -188,10 +188,12 @@ export default function ResultsPage() {
                     <td style={{ fontWeight: 'bold', maxWidth: '200px' }}>{result.examTitle}</td>
                     <td>{result.subject || '—'}</td>
                     <td className="font-mono">
-                      {result.marksObtained}/{result.totalMarks}
+                      <span style={{ color: result.marksObtained < 0 ? 'var(--danger)' : undefined }}>
+                        {result.marksObtained}/{result.totalMarks}
+                      </span>
                     </td>
                     <td className="font-mono" style={{ fontWeight: 'bold' }}>
-                      {Math.round(result.percentage)}%
+                      {Math.max(0, Math.round(result.percentage))}%
                     </td>
                     <td>
                       <span

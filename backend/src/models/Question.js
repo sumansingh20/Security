@@ -382,7 +382,7 @@ questionSchema.methods.checkAnswer = function(answer) {
       const isCorrect = acceptedAnswers.some(accepted =>
         answer.trim().toLowerCase() === String(accepted).trim().toLowerCase()
       );
-      return isCorrect ? this.marks : 0; // No negative for short answers
+      return isCorrect ? this.marks : -this.negativeMarks;
     }
 
     case 'matching': {
@@ -398,7 +398,7 @@ questionSchema.methods.checkAnswer = function(answer) {
       if (this.partialMarking) {
         return (correctCount / this.matchPairs.length) * this.marks;
       }
-      return correctCount === this.matchPairs.length ? this.marks : 0;
+      return correctCount === this.matchPairs.length ? this.marks : -this.negativeMarks;
     }
 
     case 'ordering': {
@@ -414,7 +414,7 @@ questionSchema.methods.checkAnswer = function(answer) {
         });
         return (correctPositions / this.correctOrder.length) * this.marks;
       }
-      return 0;
+      return -this.negativeMarks;
     }
 
     case 'hotspot': {

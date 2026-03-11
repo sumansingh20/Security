@@ -772,7 +772,7 @@ export const examSessionController = {
               questionOrder: questions.map(q => q._id),
               totalMarks: totalMarks,
               marksObtained: score,
-              percentage: totalMarks > 0 ? (score / totalMarks) * 100 : 0,
+              percentage: totalMarks > 0 ? Math.max(0, (score / totalMarks) * 100) : 0,
               questionsAttempted: session.answers.length,
               correctAnswers: correctCount,
               wrongAnswers: wrongCount,

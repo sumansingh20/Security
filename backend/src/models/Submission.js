@@ -311,7 +311,7 @@ submissionSchema.methods.calculateResults = async function() {
 
   this.totalMarks = totalMarks;
   this.marksObtained = marksObtained;
-  this.percentage = totalMarks > 0 ? (marksObtained / totalMarks) * 100 : 0;
+  this.percentage = totalMarks > 0 ? Math.max(0, (marksObtained / totalMarks) * 100) : 0;
   this.questionsAttempted = this.answers.length - unattempted;
   this.correctAnswers = correct;
   this.wrongAnswers = wrong;
