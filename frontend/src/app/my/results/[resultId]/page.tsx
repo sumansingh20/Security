@@ -42,9 +42,14 @@ interface QuestionReview {
   questionType: string;
   options: { _id: string; text: string; isCorrect?: boolean }[];
   studentAnswer: string[];
+  textAnswer?: string | null;
   isCorrect: boolean;
   marksObtained: number;
   maxMarks: number;
+  negativeMarks?: number;
+  correctAnswer?: any;
+  matchPairs?: { left: string; right: string }[];
+  correctOrder?: string[];
   explanation?: string;
   timeTaken?: number;
 }
@@ -129,7 +134,7 @@ export default function ResultDetailPage() {
 
   // Build per-question status
   const questionStatuses = questions.map(q => {
-    const isAttempted = (q.studentAnswer || []).length > 0;
+    const isAttempted = (q.studentAnswer || []).length > 0 || !!q.textAnswer;
     return { isAttempted, isCorrect: q.isCorrect };
   });
   const correctCount = questionStatuses.filter(s => s.isCorrect).length;
@@ -137,7 +142,7 @@ export default function ResultDetailPage() {
   const skippedCount = questionStatuses.filter(s => !s.isAttempted).length;
 
   const filteredQuestions = questions.map((q, i) => ({ q, i })).filter(({ q }) => {
-    const isAttempted = (q.studentAnswer || []).length > 0;
+    const isAttempted = (q.studentAnswer || []).length > 0 || !!q.textAnswer;
     if (questionFilter === 'all') return true;
     if (questionFilter === 'correct') return q.isCorrect;
     if (questionFilter === 'wrong') return isAttempted && !q.isCorrect;
@@ -262,7 +267,7 @@ export default function ResultDetailPage() {
                 <div style={{ background: 'var(--surface-hover)', borderRadius: '8px', height: '24px', overflow: 'hidden', position: 'relative' }}>
                   <div
                     style={{
-                      width: `${Math.min(result.percentage, 100)}%`,
+                      width: `${Math.max(0, Math.min(result.percentage, 100))}%`,
                       height: '100%',
                       background: result.passed
                         ? 'linear-gradient(90deg, var(--success), #34d399)'
@@ -318,12 +323,12 @@ export default function ResultDetailPage() {
               <div style={{ padding: '16px' }}>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {questions.map((q, idx) => {
-                    const isAttempted = (q.studentAnswer || []).length > 0;
                     let bg = 'rgba(249,115,22,0.15)'; // orange for skipped
                     let color = '#f97316';
                     let border = 'rgba(249,115,22,0.3)';
+                    const qaIsAttempted = (q.studentAnswer || []).length > 0 || !!q.textAnswer;
                     if (q.isCorrect) { bg = 'rgba(34,197,94,0.15)'; color = '#16a34a'; border = 'rgba(34,197,94,0.3)'; }
-                    else if (isAttempted) { bg = 'rgba(239,68,68,0.15)'; color = '#dc2626'; border = 'rgba(239,68,68,0.3)'; }
+                    else if (qaIsAttempted) { bg = 'rgba(239,68,68,0.15)'; color = '#dc2626'; border = 'rgba(239,68,68,0.3)'; }
                     return (
                       <button
                         key={q._id}
@@ -334,7 +339,7 @@ export default function ResultDetailPage() {
                           fontWeight: 'bold', fontSize: '12px', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
-                        title={`Q${idx + 1}: ${q.isCorrect ? 'Correct' : isAttempted ? 'Wrong' : 'Not Attempted'}`}
+                        title={`Q${idx + 1}: ${q.isCorrect ? 'Correct' : qaIsAttempted ? 'Wrong' : 'Not Attempted'}`}
                       >
                         {idx + 1}
                       </button>
@@ -376,7 +381,7 @@ export default function ResultDetailPage() {
               <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No questions match this filter.</div>
             ) : filteredQuestions.map(({ q, i: index }) => {
               const studentAnswerIds = q.studentAnswer || [];
-              const isAttempted = studentAnswerIds.length > 0;
+              const isAttempted = studentAnswerIds.length > 0 || !!q.textAnswer;
 
               return (
                 <div
@@ -413,8 +418,8 @@ export default function ResultDetailPage() {
                       </span>
                       {q.timeTaken ? <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({formatTime(q.timeTaken)})</span> : null}
                     </div>
-                    <span style={{ fontSize: '13px', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                      {q.marksObtained}/{q.maxMarks}
+                    <span style={{ fontSize: '13px', fontWeight: 'bold', fontFamily: 'monospace', color: q.marksObtained > 0 ? '#16a34a' : q.marksObtained < 0 ? '#dc2626' : undefined }}>
+                      {q.marksObtained > 0 ? '+' : ''}{q.marksObtained}/{q.maxMarks}
                     </span>
                   </div>
 
@@ -470,6 +475,74 @@ export default function ResultDetailPage() {
                       </div>
                     )}
 
+                    {/* Text Answer (fill-blank, numerical, short-answer) */}
+                    {q.textAnswer && (
+                      <div style={{
+                        marginTop: '8px', padding: '10px 14px',
+                        background: q.isCorrect ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                        border: `1px solid ${q.isCorrect ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                        borderRadius: '6px', fontSize: '13px',
+                      }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>Your Answer</span>
+                        <div style={{ marginTop: '4px', fontWeight: 500 }}>
+                          {typeof q.textAnswer === 'string' ? q.textAnswer : JSON.stringify(q.textAnswer)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Correct Answer for text-based */}
+                    {result.showCorrectAnswers && q.correctAnswer !== undefined && q.correctAnswer !== null && (
+                      <div style={{
+                        marginTop: '8px', padding: '10px 14px',
+                        background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.25)',
+                        borderRadius: '6px', fontSize: '13px',
+                      }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Correct Answer</span>
+                        <div style={{ marginTop: '4px', fontWeight: 600, color: '#16a34a' }}>
+                          {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : String(q.correctAnswer)}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Match Pairs */}
+                    {result.showCorrectAnswers && q.matchPairs && q.matchPairs.length > 0 && (
+                      <div style={{
+                        marginTop: '8px', padding: '10px 14px',
+                        background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.25)',
+                        borderRadius: '6px', fontSize: '13px',
+                      }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Correct Matches</span>
+                        {q.matchPairs.map((pair, pi) => (
+                          <div key={pi} style={{ marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 600 }}>{pair.left}</span>
+                            <span style={{ color: 'var(--text-muted)' }}>→</span>
+                            <span style={{ color: '#16a34a', fontWeight: 600 }}>{pair.right}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Correct Order */}
+                    {result.showCorrectAnswers && q.correctOrder && q.correctOrder.length > 0 && (
+                      <div style={{
+                        marginTop: '8px', padding: '10px 14px',
+                        background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.25)',
+                        borderRadius: '6px', fontSize: '13px',
+                      }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Correct Order</span>
+                        <ol style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                          {q.correctOrder.map((item, oi) => <li key={oi} style={{ marginTop: '2px' }}>{item}</li>)}
+                        </ol>
+                      </div>
+                    )}
+
+                    {/* Negative marks badge */}
+                    {q.marksObtained < 0 && (q.negativeMarks ?? 0) > 0 && (
+                      <div style={{ marginTop: '8px', fontSize: '11px', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        ⚠ Negative marking: -{q.negativeMarks} for wrong answer
+                      </div>
+                    )}
+
                     {/* Not attempted indicator */}
                     {!isAttempted && (
                       <div style={{
@@ -482,7 +555,7 @@ export default function ResultDetailPage() {
                     )}
 
                     {/* Legend for attempted */}
-                    {isAttempted && (
+                    {isAttempted && q.options && q.options.length > 0 && (
                       <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
                         Your answer is highlighted
                         {result.showCorrectAnswers && !q.isCorrect && ' · Correct answer marked in green'}

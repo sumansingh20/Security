@@ -512,8 +512,34 @@ questionSchema.methods.toStudentView = function() {
 
 // Method to get question for review (with correct answers)
 questionSchema.methods.toReviewView = function(showExplanation = false) {
+  const base = this.toStudentView();
+
+  // Mark correct options with isCorrect flag
+  const correctOptionIds = (this.correctOptions || []).map(id => id.toString());
+  if (base.options) {
+    base.options = base.options.map(opt => ({
+      ...opt,
+      isCorrect: correctOptionIds.includes(opt._id.toString()),
+    }));
+  }
+
+  // Add correct answer for text-based types
+  if (['fill-blank', 'numerical', 'short-answer'].includes(this.questionType)) {
+    base.correctAnswer = this.correctAnswer;
+  }
+
+  // Add full match pairs (with right side) for matching
+  if (this.questionType === 'matching' && this.matchPairs) {
+    base.matchPairs = this.matchPairs.map(p => ({ left: p.left, right: p.right }));
+  }
+
+  // Add correct order (unshuffled) for ordering
+  if (this.questionType === 'ordering' && this.correctOrder) {
+    base.correctOrder = [...this.correctOrder];
+  }
+
   return {
-    ...this.toStudentView(),
+    ...base,
     correctOptions: this.correctOptions,
     explanation: showExplanation ? this.explanation : undefined,
   };

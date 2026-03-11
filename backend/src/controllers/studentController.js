@@ -608,6 +608,7 @@ export const getExamReview = async (req, res, next) => {
       return {
         ...reviewQuestion,
         studentAnswer: answer?.selectedOptions || [],
+        textAnswer: answer?.textAnswer || null,
         isCorrect: answer?.isCorrect,
         marksObtained: answer?.marksObtained || 0,
         timeTaken: answer?.timeTaken || 0,
@@ -717,9 +718,11 @@ export const getResultDetails = async (req, res, next) => {
         return {
           ...questionData,
           studentAnswer: answer?.selectedOptions || [],
+          textAnswer: answer?.textAnswer || null,
           isCorrect: answer?.isCorrect,
           marksObtained: answer?.marksObtained || 0,
           maxMarks: q.marks,
+          negativeMarks: q.negativeMarks || 0,
           timeTaken: answer?.timeTaken || 0,
           visited: answer?.visited || false,
           markedForReview: answer?.markedForReview || false,
