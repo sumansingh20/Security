@@ -558,6 +558,7 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             }
           } else if (q.questionType === 'mcq-multiple') {
@@ -578,6 +579,7 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             }
           } else if (q.questionType === 'numerical') {
@@ -589,6 +591,7 @@ export const examSessionController = {
               correctCount++;
             } else if (ans.textAnswer) {
               wrongCount++;
+              score -= (q.negativeMarks || 0);
             }
           } else if (q.questionType === 'fill-blank' || q.questionType === 'short-answer') {
             if (ans.textAnswer && q.correctAnswer) {
@@ -601,6 +604,7 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             }
           } else if (q.questionType === 'matching') {
@@ -618,12 +622,15 @@ export const examSessionController = {
                     correctCount++;
                   } else {
                     wrongCount++;
+                    score -= (q.negativeMarks || 0);
                   }
                 } else {
                   wrongCount++;
+                  score -= (q.negativeMarks || 0);
                 }
               } catch (e) {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             }
           } else if (q.questionType === 'ordering') {
@@ -640,12 +647,15 @@ export const examSessionController = {
                     correctCount++;
                   } else {
                     wrongCount++;
+                    score -= (q.negativeMarks || 0);
                   }
                 } else {
                   wrongCount++;
+                  score -= (q.negativeMarks || 0);
                 }
               } catch (e) {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             }
           } else if (q.questionType === 'image-based') {
@@ -658,6 +668,7 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             } else if (ans.textAnswer && q.correctAnswer) {
               // Text-based answer for image questions
@@ -666,6 +677,7 @@ export const examSessionController = {
                 correctCount++;
               } else {
                 wrongCount++;
+                score -= (q.negativeMarks || 0);
               }
             }
           }
@@ -703,6 +715,7 @@ export const examSessionController = {
                 question: ans.questionId,
                 questionNumber: qIndex,
                 selectedOptions: [],
+                textAnswer: ans.textAnswer || null,
                 visited: true,
                 markedForReview: false,
                 answeredAt: ans.answeredAt || new Date(),
@@ -714,9 +727,16 @@ export const examSessionController = {
               // Convert selectedOption index to option ObjectId for MCQ types
               if ((q.questionType === 'mcq-single' || q.questionType === 'mcq-multiple' || q.questionType === 'true-false') 
                   && ans.selectedOption !== undefined && ans.selectedOption !== null) {
-                const selectedOpt = q.options[ans.selectedOption];
-                if (selectedOpt) {
-                  answerEntry.selectedOptions = [selectedOpt._id];
+                if (q.questionType === 'mcq-multiple' && ans.selectedOptions && ans.selectedOptions.length > 0) {
+                  // For mcq-multiple, convert all selected indices to ObjectIds
+                  answerEntry.selectedOptions = ans.selectedOptions
+                    .map(idx => q.options[idx]?._id)
+                    .filter(Boolean);
+                } else {
+                  const selectedOpt = q.options[ans.selectedOption];
+                  if (selectedOpt) {
+                    answerEntry.selectedOptions = [selectedOpt._id];
+                  }
                 }
               }
 

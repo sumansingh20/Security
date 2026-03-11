@@ -13,6 +13,10 @@ const answerSchema = new mongoose.Schema({
   selectedOptions: [{
     type: mongoose.Schema.Types.ObjectId,
   }],
+  textAnswer: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
   // Question state
   visited: {
     type: Boolean,
@@ -202,7 +206,7 @@ submissionSchema.virtual('paletteState').get(function() {
 
 // Method to get question status
 submissionSchema.methods.getQuestionStatus = function(answer) {
-  const hasAnswer = answer.selectedOptions && answer.selectedOptions.length > 0;
+  const hasAnswer = (answer.selectedOptions && answer.selectedOptions.length > 0) || !!answer.textAnswer;
   
   if (!answer.visited) {
     return 'not-visited';
@@ -224,16 +228,18 @@ submissionSchema.methods.getQuestionStatus = function(answer) {
 };
 
 // Method to update answer
-submissionSchema.methods.updateAnswer = function(questionId, selectedOptions, markedForReview = false) {
+submissionSchema.methods.updateAnswer = function(questionId, selectedOptions, markedForReview = false, textAnswer = null) {
   const answer = this.answers.find(
     a => a.question.toString() === questionId.toString()
   );
   
   if (answer) {
     answer.selectedOptions = selectedOptions;
+    answer.textAnswer = textAnswer;
     answer.markedForReview = markedForReview;
     answer.visited = true;
-    answer.answeredAt = selectedOptions.length > 0 ? new Date() : null;
+    const hasAnswer = (selectedOptions && selectedOptions.length > 0) || !!textAnswer;
+    answer.answeredAt = hasAnswer ? new Date() : null;
   }
   
   return answer;
@@ -268,14 +274,22 @@ submissionSchema.methods.calculateResults = async function() {
 
     totalMarks += question.marks;
 
-    if (!answer.selectedOptions || answer.selectedOptions.length === 0) {
+    const hasSelectedOptions = answer.selectedOptions && answer.selectedOptions.length > 0;
+    const hasTextAnswer = !!answer.textAnswer;
+
+    if (!hasSelectedOptions && !hasTextAnswer) {
       unattempted++;
       answer.marksObtained = 0;
       answer.isCorrect = null;
       continue;
     }
 
-    const marks = question.checkAnswer(answer.selectedOptions);
+    // For text-based question types, pass textAnswer; for MCQ types, pass selectedOptions
+    const textTypes = ['fill-blank', 'numerical', 'short-answer', 'matching', 'ordering'];
+    const answerToCheck = textTypes.includes(question.questionType) && hasTextAnswer
+      ? answer.textAnswer
+      : answer.selectedOptions;
+    const marks = question.checkAnswer(answerToCheck);
 
     // checkAnswer returns null for manual-grading types (long-answer, code)
     // Treat null as 0 for auto-calculation; admin can grade later

@@ -302,7 +302,7 @@ export const saveAnswer = async (req, res, next) => {
       throw new AppError('Time is up. Exam has been auto-submitted.', 400);
     }
 
-    const { questionId, selectedOptions, markedForReview, timeTaken } = req.body;
+    const { questionId, selectedOptions, markedForReview, timeTaken, textAnswer } = req.body;
 
     // Update answer in submission
     const answer = submission.answers.find(
@@ -314,10 +314,12 @@ export const saveAnswer = async (req, res, next) => {
     }
 
     answer.selectedOptions = selectedOptions || [];
+    answer.textAnswer = textAnswer || null;
     answer.markedForReview = markedForReview || false;
     answer.visited = true;
     answer.timeTaken = timeTaken || 0;
-    if (selectedOptions && selectedOptions.length > 0) {
+    const hasAnswer = (selectedOptions && selectedOptions.length > 0) || !!textAnswer;
+    if (hasAnswer) {
       answer.answeredAt = new Date();
     }
 
@@ -390,10 +392,12 @@ export const bulkSaveAnswers = async (req, res, next) => {
 
       if (answer) {
         answer.selectedOptions = answerData.selectedOptions || [];
+        answer.textAnswer = answerData.textAnswer || null;
         answer.markedForReview = answerData.markedForReview || false;
         answer.visited = true;
         answer.timeTaken = answerData.timeTaken || 0;
-        if (answerData.selectedOptions && answerData.selectedOptions.length > 0) {
+        const hasAnswer = (answerData.selectedOptions && answerData.selectedOptions.length > 0) || !!answerData.textAnswer;
+        if (hasAnswer) {
           answer.answeredAt = new Date();
         }
 

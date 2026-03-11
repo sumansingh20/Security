@@ -845,7 +845,7 @@ export const getSubmissionById = async (req, res, next) => {
   try {
     const submission = await Submission.findById(req.params.submissionId)
       .populate('student', 'firstName lastName email studentId rollNumber')
-      .populate('exam', 'title subject totalMarks passingMarks status showCorrectAnswers showExplanations showMarks');
+      .populate('exam', 'title subject totalMarks passingMarks status duration negativeMarking negativeMarkValue showCorrectAnswers showExplanations showMarks');
 
     if (!submission) {
       throw new AppError('Submission not found', 404);
@@ -860,56 +860,88 @@ export const getSubmissionById = async (req, res, next) => {
     // Build detailed answer data
     const answersWithQuestions = submission.answers.map((answer) => {
       const question = questions.find((q) => q._id.toString() === answer.question?.toString());
+      if (!question) return null;
+      
+      // Mark correct options with isCorrect for frontend rendering
+      const correctOptionIds = (question.correctOptions || []).map(id => id.toString());
+      const optionsWithCorrect = (question.options || []).map(opt => ({
+        _id: opt._id.toString(),
+        text: opt.text,
+        isCorrect: correctOptionIds.includes(opt._id.toString()),
+      }));
+
+      // Determine correctAnswer for text-based questions
+      let correctAnswer = undefined;
+      const textTypes = ['fill-blank', 'numerical', 'short-answer'];
+      if (textTypes.includes(question.questionType)) {
+        correctAnswer = question.correctAnswer;
+      }
+
       return {
-        questionId: answer.question,
-        question: question ? {
+        question: {
           _id: question._id,
           questionText: question.questionText,
           questionType: question.questionType,
           marks: question.marks,
-          options: question.options,
-          correctAnswer: question.correctOptions,
+          negativeMarks: question.negativeMarks || 0,
+          options: optionsWithCorrect,
+          correctAnswer,
           explanation: question.explanation,
           imageUrl: question.imageUrl,
-        } : null,
-        selectedOptions: answer.selectedOptions,
-        numericalAnswer: answer.numericalAnswer,
-        textAnswer: answer.textAnswer,
+          blanks: question.blanks,
+          matchPairs: question.matchPairs,
+          correctOrder: question.correctOrder,
+        },
+        selectedOptions: (answer.selectedOptions || []).map(id => id.toString()),
+        textAnswer: answer.textAnswer || null,
         isCorrect: answer.isCorrect,
         marksObtained: answer.marksObtained || 0,
-        isFlagged: answer.markedForReview,
+        visited: answer.visited || false,
+        timeTaken: answer.timeTaken || 0,
+        markedForReview: answer.markedForReview || false,
       };
-    });
+    }).filter(Boolean);
+
+    // Calculate time taken from start to submission
+    let timeTaken = submission.timeTaken || 0;
+    if (!timeTaken && submission.startedAt && submission.submittedAt) {
+      timeTaken = Math.round((new Date(submission.submittedAt).getTime() - new Date(submission.startedAt).getTime()) / 1000);
+    }
+
+    const totalMarks = submission.totalMarks || submission.exam.totalMarks || 0;
+    const passingMarks = submission.exam.passingMarks || 0;
+    const passed = totalMarks > 0 ? submission.marksObtained >= passingMarks : false;
 
     const responseData = {
       _id: submission._id,
       exam: submission.exam,
       student: {
         _id: submission.student._id,
-        name: `${submission.student.firstName} ${submission.student.lastName}`,
+        firstName: submission.student.firstName,
+        lastName: submission.student.lastName,
         email: submission.student.email,
-        rollNumber: submission.student.rollNumber || submission.student.studentId,
+        studentId: submission.student.rollNumber || submission.student.studentId,
       },
-      answers: answersWithQuestions,
-      score: submission.marksObtained,
-      percentage: submission.percentage,
       status: submission.status,
-      startTime: submission.startedAt,
-      submitTime: submission.submittedAt,
-      timeSpent: submission.timeTaken,
+      marksObtained: submission.marksObtained,
+      totalMarks,
+      percentage: submission.percentage,
+      passed,
+      questionsAttempted: submission.questionsAttempted,
+      correctAnswers: submission.correctAnswers,
+      wrongAnswers: submission.wrongAnswers,
+      totalQuestions: questions.length,
+      startedAt: submission.startedAt,
+      submittedAt: submission.submittedAt,
+      timeTaken,
+      totalViolations: submission.totalViolations,
+      submissionType: submission.submissionType,
+      answers: answersWithQuestions,
       violations: violations.map((v) => ({
         type: v.type,
         timestamp: v.timestamp,
         details: v.description,
       })),
-      isPassed: (() => {
-        const totalMarksFromQuestions = submission.totalMarks || submission.exam.totalMarks || 0;
-        const passingMarks = submission.exam.passingMarks || 0;
-        if (totalMarksFromQuestions <= 0) return false;
-        // Use percentage-based comparison: convert passingMarks to percentage of exam totalMarks
-        const passingPercentage = submission.exam.totalMarks > 0 ? (passingMarks / submission.exam.totalMarks) * 100 : 0;
-        return (submission.percentage || 0) >= passingPercentage;
-      })(),
       attemptNumber: submission.attemptNumber || 1,
     };
 
