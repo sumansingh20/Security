@@ -67,7 +67,7 @@ export default function ResultsPage() {
     if (filter === 'failed') list = list.filter(r => r.status === 'failed');
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(r => r.examTitle.toLowerCase().includes(q) || r.subject?.toLowerCase().includes(q));
+      list = list.filter(r => (r.examTitle || '').toLowerCase().includes(q) || (r.subject || '').toLowerCase().includes(q));
     }
     return list;
   }, [results, filter, search]);

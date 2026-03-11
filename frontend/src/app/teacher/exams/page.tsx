@@ -194,8 +194,8 @@ export default function TeacherExamsPage() {
   };
 
   const filteredExams = exams.filter(exam =>
-    exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exam.subject.toLowerCase().includes(searchQuery.toLowerCase())
+    (exam.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (exam.subject || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const activeExams = filteredExams.filter(e => e.status === 'ongoing');

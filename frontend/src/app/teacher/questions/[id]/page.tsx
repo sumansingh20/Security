@@ -73,7 +73,7 @@ export default function TeacherQuestionDetailPage() {
 
   const handleDelete = async () => {
     if (!question) return;
-    const plainText = question.questionText.replace(/<[^>]*>/g, '').substring(0, 50);
+    const plainText = (question.questionText || '').replace(/<[^>]*>/g, '').substring(0, 50);
     if (!confirm(`Delete question: "${plainText}..."?\nThis action cannot be undone.`)) return;
     setDeleting(true);
     try {
@@ -121,7 +121,7 @@ export default function TeacherQuestionDetailPage() {
   return (
     <LMSLayout
       pageTitle="Question Detail"
-      breadcrumbs={[{ label: 'Dashboard', href: '/teacher' }, { label: 'Questions', href: '/teacher/questions' }, { label: `Q: ${question.questionText.slice(0, 30)}...` }]}
+      breadcrumbs={[{ label: 'Dashboard', href: '/teacher' }, { label: 'Questions', href: '/teacher/questions' }, { label: `Q: ${(question.questionText || '').slice(0, 30)}...` }]}
     >
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         {/* Meta Badges */}
