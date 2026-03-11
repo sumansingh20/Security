@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
-import PageWrapper from '@/components/layouts/PageWrapper';
+import LMSLayout from '@/components/layouts/LMSLayout';
 import {
   ArrowLeft,
   Clock,
@@ -157,20 +157,20 @@ export default function SubmissionDetailPage() {
 
   if (isLoading) {
     return (
-      <PageWrapper breadcrumbs={[{ name: 'Loading...' }]}>
+      <LMSLayout breadcrumbs={[{ label: 'Administration', href: '/admin/dashboard' }, { label: 'Examinations', href: '/admin/exams' }, { label: 'Loading...' }]}>
         <div className="flex items-center justify-center h-64">
           <div className="animate-pulse flex flex-col items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700" />
             <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
           </div>
         </div>
-      </PageWrapper>
+      </LMSLayout>
     );
   }
 
   if (!submission) {
     return (
-      <PageWrapper breadcrumbs={[{ name: 'Submission not found' }]}>
+      <LMSLayout breadcrumbs={[{ label: 'Administration', href: '/admin/dashboard' }, { label: 'Examinations', href: '/admin/exams' }, { label: 'Not Found' }]}>
         <div className="text-center py-16">
           <XCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 dark:text-gray-400 text-lg">Submission not found</p>
@@ -178,7 +178,7 @@ export default function SubmissionDetailPage() {
             Back to Results
           </Link>
         </div>
-      </PageWrapper>
+      </LMSLayout>
     );
   }
 
@@ -216,13 +216,13 @@ export default function SubmissionDetailPage() {
   });
 
   return (
-    <PageWrapper
+    <LMSLayout
       breadcrumbs={[
-        { name: 'Site Administration' },
-        { name: 'Quiz Administration', href: '/admin/exams' },
-        { name: submission.exam.title || 'Exam', href: `/admin/exams/${examId}` },
-        { name: 'Results', href: `/admin/exams/${examId}/results` },
-        { name: studentName },
+        { label: 'Administration', href: '/admin/dashboard' },
+        { label: 'Examinations', href: '/admin/exams' },
+        { label: submission.exam.title || 'Exam', href: `/admin/exams/${examId}` },
+        { label: 'Results', href: `/admin/exams/${examId}/results` },
+        { label: studentName },
       ]}
     >
       {/* Back Link */}
@@ -723,6 +723,6 @@ export default function SubmissionDetailPage() {
           )}
         </div>
       </div>
-    </PageWrapper>
+    </LMSLayout>
   );
 }
