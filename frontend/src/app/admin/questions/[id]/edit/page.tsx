@@ -99,9 +99,9 @@ export default function EditQuestionPage() {
       if (!q) throw new Error('Question not found');
 
       // Map server data to form state
-      const opts = (q.options || []).map((o: any, i: number) => ({
+      const opts = (q.options || []).map((o: any) => ({
         text: o.text || '',
-        isCorrect: Array.isArray(q.correctOptions) ? q.correctOptions.includes(i) : !!o.isCorrect,
+        isCorrect: !!o.isCorrect,
       }));
 
       setQuestion({

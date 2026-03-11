@@ -161,12 +161,24 @@ export const updateQuestion = async (req, res, next) => {
         _id: opt._id || new mongoose.Types.ObjectId(),
         text: opt.text,
         imageUrl: opt.imageUrl || null,
+        isCorrect: opt.isCorrect || false,
       }));
     }
 
-    // If correct options are being updated (as array of option IDs)
+    // If correct options are being updated
     if (correctOptions) {
-      question.correctOptions = correctOptions;
+      // Handle index-based correctOptions (from frontend edit form)
+      if (correctOptions.length > 0 && typeof correctOptions[0] === 'number') {
+        const optionIds = correctOptions.map(index => question.options[index]?._id).filter(Boolean);
+        question.correctOptions = optionIds;
+        // Sync isCorrect flags
+        const correctIdSet = new Set(optionIds.map(id => id.toString()));
+        question.options.forEach(opt => {
+          opt.isCorrect = correctIdSet.has(opt._id.toString());
+        });
+      } else {
+        question.correctOptions = correctOptions;
+      }
     }
 
     // Update other fields
@@ -376,7 +388,7 @@ export const getAllQuestions = async (req, res, next) => {
     }
 
     const questions = await Question.find(query)
-      .populate('exam', 'title subject')
+      .populate('exam', 'title subject status')
       .populate('category', 'name')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)

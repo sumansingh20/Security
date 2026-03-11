@@ -25,6 +25,7 @@ interface Question {
   codeLanguage?: string;
   answerTolerance?: number;
   tags?: string[];
+  exam?: { _id: string; title: string; status: string };
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -114,6 +115,8 @@ export default function TeacherQuestionDetailPage() {
   }
 
   const diff = DIFF_COLORS[question.difficulty] || DIFF_COLORS.medium;
+  const examStatus = question.exam?.status || 'draft';
+  const canModify = ['draft', 'published'].includes(examStatus);
 
   return (
     <LMSLayout
@@ -140,6 +143,11 @@ export default function TeacherQuestionDetailPage() {
           <span style={{ padding: '4px 12px', borderRadius: 4, fontSize: 13, fontWeight: 600, background: question.isActive ? '#dcfce7' : '#fef2f2', color: question.isActive ? '#16a34a' : '#dc2626' }}>
             {question.isActive ? 'Active' : 'Inactive'}
           </span>
+          {question.exam && (
+            <span style={{ padding: '4px 12px', borderRadius: 4, fontSize: 13, fontWeight: 600, background: canModify ? '#eff6ff' : '#fff7ed', color: canModify ? '#1d4ed8' : '#ea580c' }}>
+              Exam: {question.exam.title} ({examStatus})
+            </span>
+          )}
         </div>
 
         {/* Question Text */}
@@ -277,16 +285,24 @@ export default function TeacherQuestionDetailPage() {
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap', alignItems: 'center' }}>
           <button onClick={() => router.back()} className="lms-btn lms-btn-secondary" style={{ padding: '8px 20px' }}>Back</button>
           <Link href="/teacher/questions" className="lms-btn" style={{ padding: '8px 20px', textDecoration: 'none' }}>All Questions</Link>
-          <Link href={`/teacher/questions/${questionId}/edit`} className="lms-btn lms-btn-primary" style={{ padding: '8px 20px', textDecoration: 'none' }}>Edit Question</Link>
-          <button onClick={handleToggleActive} className="lms-btn" style={{ padding: '8px 20px' }}>
-            {question.isActive ? 'Deactivate' : 'Activate'}
-          </button>
-          <button onClick={handleDelete} disabled={deleting} className="lms-btn lms-btn-danger" style={{ padding: '8px 20px' }}>
-            {deleting ? 'Deleting...' : 'Delete Question'}
-          </button>
+          {canModify ? (
+            <>
+              <Link href={`/teacher/questions/${questionId}/edit`} className="lms-btn lms-btn-primary" style={{ padding: '8px 20px', textDecoration: 'none' }}>Edit Question</Link>
+              <button onClick={handleToggleActive} className="lms-btn" style={{ padding: '8px 20px' }}>
+                {question.isActive ? 'Deactivate' : 'Activate'}
+              </button>
+              <button onClick={handleDelete} disabled={deleting} className="lms-btn lms-btn-danger" style={{ padding: '8px 20px' }}>
+                {deleting ? 'Deleting...' : 'Delete Question'}
+              </button>
+            </>
+          ) : (
+            <span style={{ fontSize: 13, color: '#ea580c', background: '#fff7ed', padding: '6px 14px', borderRadius: 6, border: '1px solid #fed7aa' }}>
+              Editing locked — exam is {examStatus}
+            </span>
+          )}
         </div>
       </div>
     </LMSLayout>

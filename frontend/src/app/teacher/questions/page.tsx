@@ -29,6 +29,11 @@ interface Question {
     _id: string;
     name: string;
   };
+  exam?: {
+    _id: string;
+    title: string;
+    status: string;
+  };
   createdAt: string;
   isActive: boolean;
   options?: Array<{ text: string; isCorrect: boolean }>;
@@ -306,17 +311,20 @@ export default function TeacherQuestionBankPage() {
             <table className="lms-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Question</th>
+                  <th style={{ width: '35%' }}>Question</th>
                   <th>Type</th>
                   <th>Difficulty</th>
                   <th>Marks</th>
-                  <th>Category</th>
+                  <th>Exam Status</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {questions.map((question) => (
+                {questions.map((question) => {
+                  const examStatus = question.exam?.status || 'draft';
+                  const canModify = ['draft', 'published'].includes(examStatus);
+                  return (
                   <tr key={question._id}>
                     <td style={{ maxWidth: '400px' }}>
                       <div style={{ fontSize: '13px' }}>
@@ -330,7 +338,11 @@ export default function TeacherQuestionBankPage() {
                       </span>
                     </td>
                     <td>{question.marks}</td>
-                    <td>{question.category?.name || '-'}</td>
+                    <td>
+                      <span className={`lms-status ${canModify ? 'lms-status-info' : 'lms-status-closed'}`} style={{ fontSize: 11 }}>
+                        {examStatus.toUpperCase()}
+                      </span>
+                    </td>
                     <td>
                       <span className={`lms-status ${question.isActive ? 'lms-status-success' : 'lms-status-closed'}`}>
                         {question.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -344,29 +356,38 @@ export default function TeacherQuestionBankPage() {
                         >
                           View
                         </Link>
-                        <Link
-                          href={`/teacher/questions/${question._id}/edit`}
-                          className="lms-btn lms-btn-sm lms-btn-primary"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleToggleActive(question._id, question.isActive)}
-                          className={`lms-btn lms-btn-sm ${question.isActive ? '' : 'lms-btn-primary'}`}
-                          title={question.isActive ? 'Deactivate' : 'Activate'}
-                        >
-                          {question.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteQuestion(question._id, question.questionText)}
-                          className="lms-btn lms-btn-sm lms-btn-danger"
-                        >
-                          Delete
-                        </button>
+                        {canModify ? (
+                          <>
+                            <Link
+                              href={`/teacher/questions/${question._id}/edit`}
+                              className="lms-btn lms-btn-sm lms-btn-primary"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleToggleActive(question._id, question.isActive)}
+                              className={`lms-btn lms-btn-sm ${question.isActive ? '' : 'lms-btn-primary'}`}
+                              title={question.isActive ? 'Deactivate' : 'Activate'}
+                            >
+                              {question.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteQuestion(question._id, question.questionText)}
+                              className="lms-btn lms-btn-sm lms-btn-danger"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', padding: '4px 8px' }}>
+                            Locked (exam {examStatus})
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
