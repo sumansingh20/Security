@@ -235,7 +235,50 @@ export const examSessionController = {
             remainingTime: existingSession.getRemainingTime(),
             totalQuestions: questionCount,
             title: exam.title,
+            allowManualSubmission: exam.allowManualSubmission !== false,
+            enableProctoring: exam.enableProctoring !== false,
+            requireCamera: exam.requireCamera === true,
+            requireMicrophone: exam.requireMicrophone === true,
+            requireFullscreen: exam.requireFullscreen !== false,
             resumed: true,
+          });
+        }
+        
+        // Check if device transfer is allowed with password
+        const examForTransfer = await Exam.findById(examId);
+        const deviceTransferPassword = req.body.deviceTransferPassword;
+        if (examForTransfer.allowDeviceTransfer && deviceTransferPassword && 
+            examForTransfer.deviceTransferPassword === deviceTransferPassword) {
+          // Allow device transfer - update session with new fingerprint/IP
+          existingSession.browserFingerprint = fingerprint;
+          existingSession.ipAddress = ipAddress;
+          existingSession.userAgent = userAgent;
+          existingSession.auditLog.push({
+            action: 'device_transfer',
+            details: { newIpAddress: ipAddress, newFingerprint: fingerprint },
+            ipAddress,
+          });
+          await existingSession.save();
+          
+          const questionCount = await Question.countDocuments({ exam: examId, isActive: true });
+          return res.status(200).json({
+            success: true,
+            sessionToken: existingSession.sessionToken,
+            examId,
+            studentId: student._id,
+            studentName: `${student.firstName} ${student.lastName}`,
+            duration: examForTransfer.duration,
+            serverEndTime: existingSession.serverEndTime,
+            remainingTime: existingSession.getRemainingTime(),
+            totalQuestions: questionCount,
+            title: examForTransfer.title,
+            allowManualSubmission: examForTransfer.allowManualSubmission !== false,
+            enableProctoring: examForTransfer.enableProctoring !== false,
+            requireCamera: examForTransfer.requireCamera === true,
+            requireMicrophone: examForTransfer.requireMicrophone === true,
+            requireFullscreen: examForTransfer.requireFullscreen !== false,
+            resumed: true,
+            deviceTransferred: true,
           });
         }
         
@@ -245,6 +288,16 @@ export const examSessionController = {
           `Login attempt from different device. Original IP: ${existingSession.ipAddress}, New IP: ${ipAddress}`,
           ipAddress
         );
+        
+        // If device transfer is enabled but wrong/no password, hint it
+        if (examForTransfer.allowDeviceTransfer) {
+          return res.status(403).json({
+            success: false,
+            reason: 'device_transfer_available',
+            message: 'You have an active session on another device. Enter the device transfer password to continue on this device.',
+            requireDeviceTransferPassword: true,
+          });
+        }
         
         throw new AppError('You already have an active session on another device. Multiple logins are not allowed.', 403);
       }
@@ -257,9 +310,19 @@ export const examSessionController = {
       
       // Create new session - cap end time to exam window
       const sessionToken = generateSessionToken();
-      const durationEnd = new Date(Date.now() + exam.duration * 60 * 1000);
-      const examEnd = exam.endTime ? new Date(exam.endTime) : durationEnd;
-      const serverEndTime = durationEnd < examEnd ? durationEnd : examEnd;
+      let serverEndTime;
+      
+      if (exam.timerMode === 'window') {
+        // Timer starts from exam startTime - same end time for all students
+        const windowEnd = new Date(exam.startTime.getTime() + exam.duration * 60 * 1000);
+        const examEnd = exam.endTime ? new Date(exam.endTime) : windowEnd;
+        serverEndTime = windowEnd < examEnd ? windowEnd : examEnd;
+      } else {
+        // Default: timer starts when student attempts
+        const durationEnd = new Date(Date.now() + exam.duration * 60 * 1000);
+        const examEnd = exam.endTime ? new Date(exam.endTime) : durationEnd;
+        serverEndTime = durationEnd < examEnd ? durationEnd : examEnd;
+      }
       
       const batchNumber = accessCheck.batch ? accessCheck.batch.batchNumber : 1;
       
@@ -296,6 +359,11 @@ export const examSessionController = {
         remainingTime: session.getRemainingTime(),
         totalQuestions: questionCount,
         title: exam.title,
+        allowManualSubmission: exam.allowManualSubmission !== false,
+        enableProctoring: exam.enableProctoring !== false,
+        requireCamera: exam.requireCamera === true,
+        requireMicrophone: exam.requireMicrophone === true,
+        requireFullscreen: exam.requireFullscreen !== false,
       });
       
     } catch (error) {
@@ -355,6 +423,11 @@ export const examSessionController = {
           duration: exam.duration,
           negativeMarking: exam.negativeMarking,
           negativeMarkValue: exam.negativeMarkValue,
+          allowManualSubmission: exam.allowManualSubmission !== false,
+          enableProctoring: exam.enableProctoring !== false,
+          requireCamera: exam.requireCamera === true,
+          requireMicrophone: exam.requireMicrophone === true,
+          requireFullscreen: exam.requireFullscreen !== false,
         },
         questions: questions.map((q, index) => {
           // Map backend question types to frontend display types

@@ -32,10 +32,19 @@ interface ExamSettings {
   showExplanations: boolean;
   calculatorType: 'none' | 'basic' | 'scientific';
   requireFullscreen: boolean;
+  requireCamera: boolean;
+  requireMicrophone: boolean;
   detectTabSwitch: boolean;
   detectCopyPaste: boolean;
   maxViolations: number;
   blockRightClick: boolean;
+  // Timer mode
+  timerMode: 'attempt' | 'window';
+  // Device transfer
+  allowDeviceTransfer: boolean;
+  deviceTransferPassword: string;
+  // Manual submission
+  allowManualSubmission: boolean;
 }
 
 const defaultSettings: ExamSettings = {
@@ -63,10 +72,16 @@ const defaultSettings: ExamSettings = {
   showExplanations: false,
   calculatorType: 'none',
   requireFullscreen: true,
+  requireCamera: false,
+  requireMicrophone: false,
   detectTabSwitch: true,
   detectCopyPaste: true,
   maxViolations: 5,
   blockRightClick: true,
+  timerMode: 'attempt',
+  allowDeviceTransfer: false,
+  deviceTransferPassword: '',
+  allowManualSubmission: true,
 };
 
 export default function TeacherCreateExamPage() {
@@ -154,11 +169,18 @@ export default function TeacherCreateExamPage() {
         showExplanations: settings.showExplanations,
         calculatorType: settings.calculatorType,
         calculatorEnabled: settings.calculatorType !== 'none',
-        enableProctoring: settings.requireFullscreen || settings.detectTabSwitch || settings.detectCopyPaste,
+        enableProctoring: settings.requireFullscreen || settings.requireCamera || settings.requireMicrophone || settings.detectTabSwitch || settings.detectCopyPaste,
+        requireFullscreen: settings.requireFullscreen,
+        requireCamera: settings.requireCamera,
+        requireMicrophone: settings.requireMicrophone,
         detectTabSwitch: settings.detectTabSwitch,
         detectCopyPaste: settings.detectCopyPaste,
         blockRightClick: settings.blockRightClick,
         maxViolationsBeforeSubmit: settings.maxViolations,
+        timerMode: settings.timerMode,
+        allowDeviceTransfer: settings.allowDeviceTransfer,
+        deviceTransferPassword: settings.allowDeviceTransfer ? settings.deviceTransferPassword : '',
+        allowManualSubmission: settings.allowManualSubmission,
         status,
       };
       
@@ -368,6 +390,24 @@ export default function TeacherCreateExamPage() {
                 required
               />
               <div className="lms-form-help">Time allowed per candidate once started (max 8 hours)</div>
+            </div>
+
+            <div className="lms-form-group">
+              <label className="lms-label">Timer Mode</label>
+              <select
+                className="lms-select w-64"
+                value={settings.timerMode}
+                onChange={(e) => updateSettings('timerMode', e.target.value as 'attempt' | 'window')}
+                title="Timer mode"
+              >
+                <option value="attempt">Start on Attempt (individual timer)</option>
+                <option value="window">Start from Exam Window (same time for all)</option>
+              </select>
+              <div className="lms-form-help">
+                {settings.timerMode === 'attempt' 
+                  ? 'Timer starts when each student begins the exam. Each student gets the full duration.'
+                  : 'Timer starts from exam start time for all students. Late joiners get less time.'}
+              </div>
             </div>
           </div>
         )}
@@ -608,6 +648,30 @@ export default function TeacherCreateExamPage() {
               <label className="lms-checkbox-label">
                 <input
                   type="checkbox"
+                  checked={settings.requireCamera}
+                  onChange={(e) => updateSettings('requireCamera', e.target.checked)}
+                />
+                Require Webcam (Live Camera Monitoring)
+              </label>
+              <div className="lms-form-help">Students must enable their webcam during the exam for live proctoring.</div>
+            </div>
+
+            <div className="lms-form-group">
+              <label className="lms-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={settings.requireMicrophone}
+                  onChange={(e) => updateSettings('requireMicrophone', e.target.checked)}
+                />
+                Require Microphone (Audio Monitoring)
+              </label>
+              <div className="lms-form-help">Students must enable their microphone. Audio levels are monitored during the exam.</div>
+            </div>
+
+            <div className="lms-form-group">
+              <label className="lms-checkbox-label">
+                <input
+                  type="checkbox"
                   checked={settings.detectTabSwitch}
                   onChange={(e) => updateSettings('detectTabSwitch', e.target.checked)}
                 />
@@ -648,6 +712,50 @@ export default function TeacherCreateExamPage() {
                 max={20}
               />
             </div>
+
+            <div className="lms-section-title mt-6">Submission &amp; Device Settings</div>
+
+            <div className="lms-form-group">
+              <label className="lms-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={settings.allowManualSubmission}
+                  onChange={(e) => updateSettings('allowManualSubmission', e.target.checked)}
+                />
+                Allow Manual Submission
+              </label>
+              <div className="lms-form-help">
+                {settings.allowManualSubmission 
+                  ? 'Students can submit the exam manually before time expires.'
+                  : 'Students cannot submit manually. Exam will only auto-submit when time expires.'}
+              </div>
+            </div>
+
+            <div className="lms-form-group">
+              <label className="lms-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={settings.allowDeviceTransfer}
+                  onChange={(e) => updateSettings('allowDeviceTransfer', e.target.checked)}
+                />
+                Allow Device Transfer
+              </label>
+              <div className="lms-form-help">Allow students to continue exam on a different device using a password</div>
+            </div>
+
+            {settings.allowDeviceTransfer && (
+              <div className="lms-form-group">
+                <label className="lms-label">Device Transfer Password</label>
+                <input
+                  type="text"
+                  className="lms-input w-64"
+                  value={settings.deviceTransferPassword}
+                  onChange={(e) => updateSettings('deviceTransferPassword', e.target.value)}
+                  placeholder="Enter a password for device transfer"
+                />
+                <div className="lms-form-help">Students will need this password to transfer their session to a new device</div>
+              </div>
+            )}
           </div>
         )}
 

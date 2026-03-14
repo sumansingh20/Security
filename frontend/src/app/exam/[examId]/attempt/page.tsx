@@ -62,6 +62,17 @@ export default function ExamAttemptPage() {
   const [examTitle, setExamTitle] = useState('');
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [warningMessage, setWarningMessage] = useState('');
+  const [allowManualSubmission, setAllowManualSubmission] = useState(true);
+
+  // Proctoring state
+  const [requireCamera, setRequireCamera] = useState(false);
+  const [requireMicrophone, setRequireMicrophone] = useState(false);
+  const [requireFullscreen, setRequireFullscreen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState('');
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  const [micLevel, setMicLevel] = useState(0);
+  const [micError, setMicError] = useState('');
 
   // Refs for violation detection
   const windowFocusRef = useRef(true);
@@ -70,10 +81,111 @@ export default function ExamAttemptPage() {
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const sessionTokenRef = useRef<string | null>(null);
   const fingerprintRef = useRef<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micAnimRef = useRef<number>(0);
 
   // Keep refs in sync with state
   useEffect(() => { sessionTokenRef.current = sessionToken; }, [sessionToken]);
   useEffect(() => { fingerprintRef.current = fingerprint; }, [fingerprint]);
+
+  // Start camera
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: 'user' },
+        audio: false,
+      });
+      const videoTrack = stream.getVideoTracks()[0];
+      if (!videoTrack || videoTrack.readyState !== 'live') {
+        setCameraError('Camera stream is not active.');
+        return;
+      }
+      setCameraStream(stream);
+      setCameraError('');
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try { await videoRef.current.play(); } catch {}
+      }
+    } catch (err: any) {
+      const msg = err?.name === 'NotAllowedError'
+        ? 'Camera access denied. Please allow camera in browser settings.'
+        : err?.name === 'NotFoundError'
+        ? 'No camera found.'
+        : err?.name === 'NotReadableError'
+        ? 'Camera is in use by another application.'
+        : 'Camera access failed.';
+      setCameraError(msg);
+    }
+  }, []);
+
+  // Wire camera stream to video element
+  useEffect(() => {
+    if (!cameraStream || !videoRef.current) return;
+    videoRef.current.srcObject = cameraStream;
+    videoRef.current.play().catch(() => {});
+  }, [cameraStream]);
+
+  // Start microphone
+  const startMicrophone = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      setMicStream(stream);
+      setMicError('');
+
+      const audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      audioCtxRef.current = audioCtx;
+      analyserRef.current = analyser;
+
+      const dataArr = new Uint8Array(analyser.frequencyBinCount);
+      const poll = () => {
+        if (audioCtx.state === 'closed') return;
+        analyser.getByteFrequencyData(dataArr);
+        const avg = dataArr.reduce((s, v) => s + v, 0) / dataArr.length;
+        setMicLevel(Math.min(100, Math.round((avg / 128) * 100)));
+        micAnimRef.current = requestAnimationFrame(poll);
+      };
+      poll();
+    } catch (err: any) {
+      const msg = err?.name === 'NotAllowedError'
+        ? 'Microphone access denied. Please allow mic in browser settings.'
+        : err?.name === 'NotFoundError'
+        ? 'No microphone found.'
+        : 'Microphone access failed.';
+      setMicError(msg);
+    }
+  }, []);
+
+  // Cleanup camera/mic on unmount
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(micAnimRef.current);
+      audioCtxRef.current?.close();
+      cameraStream?.getTracks().forEach(t => t.stop());
+      micStream?.getTracks().forEach(t => t.stop());
+    };
+  }, [cameraStream, micStream]);
+
+  // Fullscreen enforcement
+  useEffect(() => {
+    if (!requireFullscreen || loading || submitted || terminated) return;
+    const handleFsChange = () => {
+      if (!document.fullscreenElement) {
+        reportViolation('fullscreen_exit', 'Exited fullscreen mode');
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, [requireFullscreen, loading, submitted, terminated]);
 
   // Get browser fingerprint with timeout to prevent stuck loading
   useEffect(() => {
@@ -171,6 +283,20 @@ export default function ExamAttemptPage() {
       setViolationCount(data.session.violationCount);
       setMaxViolations(data.session.maxViolations);
       setCurrentQuestion(data.session.currentQuestionIndex);
+      setAllowManualSubmission(data.exam.allowManualSubmission !== false);
+
+      // Set proctoring flags and start camera/mic if required
+      const camRequired = data.exam.requireCamera === true;
+      const micRequired = data.exam.requireMicrophone === true;
+      const fsRequired = data.exam.requireFullscreen !== false;
+      setRequireCamera(camRequired);
+      setRequireMicrophone(micRequired);
+      setRequireFullscreen(fsRequired);
+      if (camRequired) startCamera();
+      if (micRequired) startMicrophone();
+      if (fsRequired && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
 
       // Load saved answers - restore matching/ordering state from textAnswer
       const savedAnswers = new Map<string, Answer>();
@@ -559,10 +685,13 @@ export default function ExamAttemptPage() {
     sessionStorage.removeItem(`exam_session_${examId}`);
   };
 
-  // Clear intervals
+  // Clear intervals and cleanup media
   const clearIntervals = () => {
     if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    cancelAnimationFrame(micAnimRef.current);
+    audioCtxRef.current?.close();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   };
 
   // Format time
@@ -684,6 +813,53 @@ export default function ExamAttemptPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 select-none" style={{ userSelect: 'none' }}>
+      {/* Fullscreen reminder */}
+      {requireFullscreen && typeof document !== 'undefined' && !document.fullscreenElement && (
+        <div
+          className="fixed top-0 left-0 right-0 z-[60] bg-red-600 text-white text-center py-2 text-sm font-semibold cursor-pointer"
+          onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}
+        >
+          ⚠ Fullscreen required — Click here to re-enter fullscreen
+        </div>
+      )}
+
+      {/* Camera/Mic floating panel */}
+      {(requireCamera || requireMicrophone) && (
+        <div className="fixed top-16 right-4 z-50 bg-gray-900 rounded-lg shadow-xl overflow-hidden" style={{ width: 180 }}>
+          {requireCamera && (
+            <div className="relative">
+              <div className="absolute top-1 left-1 z-10 flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded text-[10px] text-white">
+                <span className={`inline-block w-2 h-2 rounded-full ${cameraStream ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                {cameraStream ? 'LIVE' : 'OFF'}
+              </div>
+              {cameraError ? (
+                <div className="w-full h-[135px] flex items-center justify-center bg-gray-800 text-red-400 text-xs p-2 text-center">{cameraError}</div>
+              ) : (
+                <video ref={videoRef} autoPlay muted playsInline className="w-full h-[135px] object-cover bg-black" />
+              )}
+            </div>
+          )}
+          {requireMicrophone && (
+            <div className="p-2 bg-gray-800">
+              <div className="flex items-center gap-1.5 mb-1">
+                <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+                <span className="text-[10px] text-gray-400">{micStream ? 'MIC ON' : 'MIC OFF'}</span>
+              </div>
+              <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${micLevel > 60 ? 'bg-red-500' : micLevel > 30 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${micLevel}%` }}
+                />
+              </div>
+              {micError && <p className="text-[10px] text-red-400 mt-1">{micError}</p>}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header - Fixed */}
       <header className="fixed top-0 left-0 right-0 bg-blue-900 text-white z-50">
         <div className="flex items-center justify-between px-4 py-3">
@@ -692,6 +868,22 @@ export default function ExamAttemptPage() {
           </div>
 
           <div className="flex items-center space-x-6">
+            {/* Proctoring indicators */}
+            {(requireCamera || requireMicrophone) && (
+              <div className="flex items-center space-x-2 text-xs">
+                {requireCamera && (
+                  <span className={`px-1.5 py-0.5 rounded ${cameraStream ? 'bg-green-600' : 'bg-red-600'}`}>
+                    CAM {cameraStream ? 'ON' : 'OFF'}
+                  </span>
+                )}
+                {requireMicrophone && (
+                  <span className={`px-1.5 py-0.5 rounded ${micStream ? 'bg-green-600' : 'bg-red-600'}`}>
+                    MIC {micStream ? 'ON' : 'OFF'}
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Timer */}
             <div className={`flex items-center space-x-2 ${remainingTime <= 300 ? 'text-red-300 animate-pulse' : ''}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -713,13 +905,6 @@ export default function ExamAttemptPage() {
               <span className="font-medium">{questions.filter(q => getQuestionStatus(q.id) === 'answered').length}</span>
               <span className="text-blue-200">/{totalQuestions} answered</span>
             </div>
-
-            {/* Save indicator */}
-            {saving ? (
-              <span className="text-xs text-blue-200">Saving...</span>
-            ) : lastSaved ? (
-              <span className="text-xs text-green-300">Saved</span>
-            ) : null}
           </div>
         </div>
       </header>
@@ -1045,20 +1230,24 @@ export default function ExamAttemptPage() {
           <button
             onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
             disabled={currentQuestion === 0}
-            className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-blue-900 text-white rounded hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ← Previous
           </button>
 
-          <div className="flex items-center space-x-4">
-            {currentQuestion < questions.length - 1 ? (
-              <button
-                onClick={() => setCurrentQuestion(currentQuestion + 1)}
-                className="px-6 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
-              >
-                Next →
-              </button>
-            ) : (
+          <div className="flex items-center space-x-3">
+            {/* Auto-save indicator */}
+            {saving ? (
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <span className="animate-spin inline-block w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full"></span>
+                Auto-saving...
+              </span>
+            ) : lastSaved ? (
+              <span className="text-xs text-green-500">✓ Auto-saved</span>
+            ) : null}
+
+            {/* Submit button - only if manual submission is allowed */}
+            {allowManualSubmission && (
               <button
                 onClick={handleSubmit}
                 className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
@@ -1069,10 +1258,11 @@ export default function ExamAttemptPage() {
           </div>
 
           <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+            onClick={() => setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1))}
+            disabled={currentQuestion === questions.length - 1}
+            className="px-6 py-2 bg-blue-900 text-white rounded hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit Now
+            Next →
           </button>
         </div>
       </footer>

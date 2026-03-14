@@ -91,8 +91,40 @@ const examSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  // Timer mode: 'attempt' = starts when student begins, 'window' = starts from exam startTime for all
+  timerMode: {
+    type: String,
+    enum: ['attempt', 'window'],
+    default: 'attempt',
+  },
+  // Device transfer: allow admin to authorize student to switch device with a password
+  allowDeviceTransfer: {
+    type: Boolean,
+    default: false,
+  },
+  deviceTransferPassword: {
+    type: String,
+    default: '',
+  },
+  // Manual submission toggle: if false, only auto-submit on time expiry
+  allowManualSubmission: {
+    type: Boolean,
+    default: true,
+  },
   // Anti-cheating settings
   enableProctoring: {
+    type: Boolean,
+    default: true,
+  },
+  requireCamera: {
+    type: Boolean,
+    default: false,
+  },
+  requireMicrophone: {
+    type: Boolean,
+    default: false,
+  },
+  requireFullscreen: {
     type: Boolean,
     default: true,
   },

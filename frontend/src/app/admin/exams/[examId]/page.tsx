@@ -42,12 +42,19 @@ interface Exam {
   calculatorType: 'none' | 'basic' | 'scientific';
   calculatorEnabled: boolean;
   enableProctoring: boolean;
+  requireFullscreen: boolean;
+  requireCamera: boolean;
+  requireMicrophone: boolean;
   detectTabSwitch: boolean;
   detectCopyPaste: boolean;
   maxViolationsBeforeSubmit: number;
   blockRightClick: boolean;
   negativeMarking: boolean;
   negativeMarkValue: number;
+  timerMode: 'attempt' | 'window';
+  allowDeviceTransfer: boolean;
+  deviceTransferPassword: string;
+  allowManualSubmission: boolean;
   status: 'draft' | 'published' | 'ongoing' | 'completed' | 'archived';
   questions: Question[];
 }
@@ -414,6 +421,24 @@ export default function EditExamPage() {
                   </div>
                   <div className="lms-form-group" style={{ marginBottom: 12 }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={exam.requireFullscreen !== false} onChange={(e) => updateExam('requireFullscreen', e.target.checked)} />
+                      <span>Require Fullscreen Mode</span>
+                    </label>
+                  </div>
+                  <div className="lms-form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={exam.requireCamera || false} onChange={(e) => updateExam('requireCamera', e.target.checked)} />
+                      <span>Require Webcam (Live Camera Monitoring)</span>
+                    </label>
+                  </div>
+                  <div className="lms-form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={exam.requireMicrophone || false} onChange={(e) => updateExam('requireMicrophone', e.target.checked)} />
+                      <span>Require Microphone (Audio Monitoring)</span>
+                    </label>
+                  </div>
+                  <div className="lms-form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                       <input type="checkbox" checked={exam.detectTabSwitch} onChange={(e) => updateExam('detectTabSwitch', e.target.checked)} />
                       <span>Detect tab/window switching</span>
                     </label>
@@ -433,6 +458,39 @@ export default function EditExamPage() {
                   <div className="lms-form-group">
                     <label className="lms-label">Maximum violations before auto-submit</label>
                     <input type="number" className="lms-input" style={{ width: 100 }} min={1} max={20} value={exam.maxViolationsBeforeSubmit} onChange={(e) => updateExam('maxViolationsBeforeSubmit', parseInt(e.target.value) || 5)} />
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12, color: 'var(--primary)' }}>Timer, Submission &amp; Device</div>
+                    
+                    <div className="lms-form-group" style={{ marginBottom: 12 }}>
+                      <label className="lms-label">Timer Mode</label>
+                      <select className="lms-select" style={{ width: 280 }} value={exam.timerMode || 'attempt'} onChange={(e) => updateExam('timerMode', e.target.value)} title="Timer mode">
+                        <option value="attempt">Start on Attempt (individual)</option>
+                        <option value="window">Start from Exam Window (same for all)</option>
+                      </select>
+                    </div>
+
+                    <div className="lms-form-group" style={{ marginBottom: 12 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={exam.allowManualSubmission !== false} onChange={(e) => updateExam('allowManualSubmission', e.target.checked)} />
+                        <span>Allow manual submission</span>
+                      </label>
+                    </div>
+
+                    <div className="lms-form-group" style={{ marginBottom: 12 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={exam.allowDeviceTransfer || false} onChange={(e) => updateExam('allowDeviceTransfer', e.target.checked)} />
+                        <span>Allow device transfer (with password)</span>
+                      </label>
+                    </div>
+
+                    {exam.allowDeviceTransfer && (
+                      <div className="lms-form-group">
+                        <label className="lms-label">Device Transfer Password</label>
+                        <input type="text" className="lms-input" style={{ width: 250 }} value={exam.deviceTransferPassword || ''} onChange={(e) => updateExam('deviceTransferPassword', e.target.value)} placeholder="Enter password" />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

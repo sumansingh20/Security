@@ -59,11 +59,18 @@ export default function ExamSettingsPage() {
     negativeMarking: false,
     negativeMarkValue: 0.25,
     maxViolationsBeforeSubmit: 5,
+    requireFullscreen: true,
+    requireCamera: false,
+    requireMicrophone: false,
     detectTabSwitch: true,
     detectCopyPaste: true,
     blockRightClick: true,
     calculatorEnabled: false,
     calculatorType: 'none',
+    timerMode: 'attempt',
+    allowDeviceTransfer: false,
+    deviceTransferPassword: '',
+    allowManualSubmission: true,
   });
 
   useEffect(() => {
@@ -85,11 +92,18 @@ export default function ExamSettingsPage() {
           negativeMarking: examData.negativeMarking || false,
           negativeMarkValue: examData.negativeMarkValue || 0.25,
           maxViolationsBeforeSubmit: examData.maxViolationsBeforeSubmit || 5,
+          requireFullscreen: examData.requireFullscreen !== false,
+          requireCamera: examData.requireCamera || false,
+          requireMicrophone: examData.requireMicrophone || false,
           detectTabSwitch: examData.detectTabSwitch !== false,
           detectCopyPaste: examData.detectCopyPaste !== false,
           blockRightClick: examData.blockRightClick !== false,
           calculatorEnabled: examData.calculatorEnabled || false,
           calculatorType: examData.calculatorType || 'none',
+          timerMode: examData.timerMode || 'attempt',
+          allowDeviceTransfer: examData.allowDeviceTransfer || false,
+          deviceTransferPassword: examData.deviceTransferPassword || '',
+          allowManualSubmission: examData.allowManualSubmission !== false,
         });
         if (examData.enrolledStudents) {
           setSelectedStudents(new Set(examData.enrolledStudents));
@@ -389,6 +403,33 @@ export default function ExamSettingsPage() {
                 <label className="lms-checkbox-label">
                   <input
                     type="checkbox"
+                    checked={formData.requireFullscreen}
+                    onChange={(e) => handleFormChange('requireFullscreen', e.target.checked)}
+                  />
+                  Require Fullscreen Mode
+                </label>
+
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.requireCamera}
+                    onChange={(e) => handleFormChange('requireCamera', e.target.checked)}
+                  />
+                  Require Webcam (Live Camera Monitoring)
+                </label>
+
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.requireMicrophone}
+                    onChange={(e) => handleFormChange('requireMicrophone', e.target.checked)}
+                  />
+                  Require Microphone (Audio Monitoring)
+                </label>
+
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
                     checked={formData.detectTabSwitch}
                     onChange={(e) => handleFormChange('detectTabSwitch', e.target.checked)}
                   />
@@ -418,6 +459,72 @@ export default function ExamSettingsPage() {
                 <strong>Note:</strong> Session binding (IP + Device) is always enabled.
                 Students cannot login from multiple devices.
               </div>
+            </div>
+          </div>
+
+          {/* Timer, Submission & Device Settings */}
+          <div className="lms-section" style={{ marginTop: '16px' }}>
+            <div className="lms-section-title">Timer, Submission &amp; Device Settings</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="lms-form-group">
+                <label className="lms-label">Timer Mode</label>
+                <select
+                  className="lms-select"
+                  value={formData.timerMode}
+                  onChange={(e) => handleFormChange('timerMode', e.target.value)}
+                  title="Timer mode"
+                >
+                  <option value="attempt">Start on Attempt (individual timer)</option>
+                  <option value="window">Start from Exam Window (same time for all)</option>
+                </select>
+                <div className="lms-form-help">
+                  {formData.timerMode === 'attempt' 
+                    ? 'Timer starts when each student begins. Each student gets the full duration.'
+                    : 'Timer starts from exam start time. Late joiners get less time.'}
+                </div>
+              </div>
+
+              <div className="lms-form-group">
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowManualSubmission}
+                    onChange={(e) => handleFormChange('allowManualSubmission', e.target.checked)}
+                  />
+                  Allow Manual Submission
+                </label>
+                <div className="lms-form-help">
+                  {formData.allowManualSubmission 
+                    ? 'Students can submit manually before time expires.'
+                    : 'Exam will only auto-submit when time expires.'}
+                </div>
+              </div>
+
+              <div className="lms-form-group">
+                <label className="lms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowDeviceTransfer}
+                    onChange={(e) => handleFormChange('allowDeviceTransfer', e.target.checked)}
+                  />
+                  Allow Device Transfer
+                </label>
+                <div className="lms-form-help">Allow students to switch device with a password</div>
+              </div>
+
+              {formData.allowDeviceTransfer && (
+                <div className="lms-form-group">
+                  <label className="lms-label">Device Transfer Password</label>
+                  <input
+                    type="text"
+                    className="lms-input"
+                    style={{ maxWidth: '250px' }}
+                    value={formData.deviceTransferPassword}
+                    onChange={(e) => handleFormChange('deviceTransferPassword', e.target.value)}
+                    placeholder="Enter password for device transfer"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

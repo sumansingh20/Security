@@ -14,6 +14,8 @@ export default function ExamLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showDeviceTransfer, setShowDeviceTransfer] = useState(false);
+  const [deviceTransferPassword, setDeviceTransferPassword] = useState('');
   const [examDetails, setExamDetails] = useState<{
     examId: string;
     title: string;
@@ -44,6 +46,7 @@ export default function ExamLoginPage() {
           userId,
           password,
           fingerprint,
+          deviceTransferPassword: showDeviceTransfer ? deviceTransferPassword : undefined,
         }),
       });
 
@@ -66,6 +69,9 @@ export default function ExamLoginPage() {
           setError(data.message || 'Your batch is not active yet. Please wait.');
         } else if (data.reason === 'not_enrolled') {
           setError('You are not enrolled in this exam.');
+        } else if (data.reason === 'device_transfer_available') {
+          setShowDeviceTransfer(true);
+          setError(data.message || 'You have an active session on another device. Enter the device transfer password to continue.');
         } else if (data.reason === 'session_exists') {
           const resolvedExamId = data.examId || examCode;
           sessionStorage.setItem(`exam_session_${resolvedExamId}`, data.sessionToken);
@@ -80,6 +86,12 @@ export default function ExamLoginPage() {
 
       const resolvedExamId = data.examId || examCode;
       sessionStorage.setItem(`exam_session_${resolvedExamId}`, data.sessionToken);
+
+      // If resumed or device transferred, go directly to attempt
+      if (data.resumed || data.deviceTransferred) {
+        router.push(`/exam/${resolvedExamId}/attempt`);
+        return;
+      }
 
       setExamDetails({
         examId: data.examId,
@@ -392,6 +404,25 @@ export default function ExamLoginPage() {
                     Enter your date of birth as password (e.g., 15-08-2000)
                   </p>
                 </div>
+
+                {showDeviceTransfer && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <label htmlFor="deviceTransferPassword" style={labelStyle}>Device Transfer Password</label>
+                    <input
+                      id="deviceTransferPassword"
+                      type="password"
+                      value={deviceTransferPassword}
+                      onChange={(e) => setDeviceTransferPassword(e.target.value)}
+                      placeholder="Enter device transfer password"
+                      style={inputStyle}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                    />
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#e67e22' }}>
+                      Enter the password provided by your admin to transfer your session to this device
+                    </p>
+                  </div>
+                )}
 
                 <button
                   type="submit"
