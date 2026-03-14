@@ -1,4 +1,3 @@
-
 # Secure Examination Portal
 
 A full-stack proctored online examination system built for educational institutions. Supports real-time exam monitoring, violation detection, batch management, and comprehensive result analytics.
