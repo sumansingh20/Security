@@ -11,8 +11,7 @@ try {
     res.status(500).json({
       success: false,
       error: 'Server failed to initialize',
-      details: err.message,
-      stack: err.stack,
+      details: process.env.NODE_ENV !== 'production' ? err.message : 'Internal server error',
     });
   };
 }

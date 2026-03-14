@@ -42,8 +42,8 @@ const config = {
 
   /* ---------------- JWT ---------------- */
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+    accessSecret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? (() => { console.error('FATAL: JWT_ACCESS_SECRET must be set in production'); process.exit(1); })() : 'dev-access-secret'),
+    refreshSecret: process.env.JWT_REFRESH_SECRET || (process.env.NODE_ENV === 'production' ? (() => { console.error('FATAL: JWT_REFRESH_SECRET must be set in production'); process.exit(1); })() : 'dev-refresh-secret'),
     accessExpiry: process.env.JWT_ACCESS_EXPIRY || '24h',
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
   },

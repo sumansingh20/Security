@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import connectDB from './config/database.js';
 import routes from './routes/index.js';
 import User from './models/User.js';
+import { sanitizeInput } from './middleware/security.js';
 
 const app = express();
 
@@ -101,6 +102,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
 app.use(compression());
+app.use(sanitizeInput);
 
 /* ========== HEALTH CHECK (NO DB REQUIRED) ========== */
 app.get('/', (req, res) => {
@@ -123,7 +125,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // Reset demo users - unlocks accounts and sets studentId/DOB
+// Protected: only allowed in non-production or with admin secret
 app.get('/api/reset-demo', async (req, res) => {
+  if (process.env.NODE_ENV === 'production' && req.query.key !== process.env.ADMIN_RESET_KEY) {
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
   try {
     await initializeDB();
     

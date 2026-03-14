@@ -11,7 +11,7 @@ class SocketService {
     if (typeof window === 'undefined') return;
     if (this.examSocket?.connected) return;
 
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:5000';
 
     this.examSocket = io(`${socketUrl}/exam-session`, {
       auth: { sessionToken, fingerprint },
@@ -30,7 +30,7 @@ class SocketService {
     if (typeof window === 'undefined') return;
     if (this.monitorSocket?.connected) return;
 
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:5000';
 
     this.monitorSocket = io(`${socketUrl}/exam-monitor`, {
       auth: { token },
