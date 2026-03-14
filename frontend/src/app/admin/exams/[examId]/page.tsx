@@ -465,7 +465,7 @@ export default function EditExamPage() {
                     
                     <div className="lms-form-group" style={{ marginBottom: 12 }}>
                       <label className="lms-label">Timer Mode</label>
-                      <select className="lms-select" style={{ width: 280 }} value={exam.timerMode || 'attempt'} onChange={(e) => updateExam('timerMode', e.target.value)} title="Timer mode">
+                      <select className="lms-select" style={{ width: 280 }} value={exam.timerMode || 'attempt'} onChange={(e) => updateExam('timerMode', e.target.value as 'attempt' | 'window')} title="Timer mode">
                         <option value="attempt">Start on Attempt (individual)</option>
                         <option value="window">Start from Exam Window (same for all)</option>
                       </select>
