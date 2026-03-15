@@ -1235,27 +1235,15 @@ export default function ExamAttemptPage() {
             ← Previous
           </button>
 
-          <div className="flex items-center space-x-3">
-            {/* Auto-save indicator */}
-            {saving ? (
-              <span className="text-xs text-gray-400 flex items-center gap-1">
-                <span className="animate-spin inline-block w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full"></span>
-                Auto-saving...
-              </span>
-            ) : lastSaved ? (
-              <span className="text-xs text-green-500">✓ Auto-saved</span>
-            ) : null}
-
-            {/* Submit button - only if manual submission is allowed */}
-            {allowManualSubmission && (
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-              >
-                Submit Exam
-              </button>
-            )}
-          </div>
+          {/* Submit button - only if manual submission is allowed */}
+          {allowManualSubmission && (
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+            >
+              Submit Exam
+            </button>
+          )}
 
           <button
             onClick={() => setCurrentQuestion(Math.min(questions.length - 1, currentQuestion + 1))}
