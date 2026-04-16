@@ -4,7 +4,7 @@ import { submitViolation } from '../lib/api';
 
 export const useAntiCheat = (examId: string) => {
   const [violationCount, setViolationCount] = useState(0);
-  const { setExamStatus } = useExamStore();
+  const { autoSubmit } = useExamStore();
 
   useEffect(() => {
     // 1. Tab Switch / Visibility Change
@@ -42,14 +42,15 @@ export const useAntiCheat = (examId: string) => {
   }, [examId]);
 
   const handleViolation = async (type: string, description: string) => {
-    setViolationCount((prev) => prev + 1);
+    const nextViolationCount = violationCount + 1;
+    setViolationCount(nextViolationCount);
     
     try {
       await submitViolation(examId, { type, description });
       
       // Auto-submit or terminate if violations exceed limit
-      if (violationCount >= 3) {
-        setExamStatus('terminated_due_to_violation');
+      if (nextViolationCount >= 3) {
+        await autoSubmit('Exam terminated due to multiple violations.');
         alert('Exam terminated due to multiple violations.');
         // Navigate or auto-submit logic here
       } else {

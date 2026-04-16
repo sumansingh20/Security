@@ -63,6 +63,13 @@ api.interceptors.response.use(
 
 export default api;
 
+// Backward-compatible helper used by anti-cheat hook.
+export const submitViolation = (submissionId: string, data: { type: string; description: string }) =>
+  examApi.reportViolation(submissionId, {
+    type: data.type,
+    details: data.description,
+  });
+
 // API helper functions for common operations
 export const examApi = {
   // Student exam operations
